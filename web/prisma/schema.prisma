@@ -1,0 +1,118 @@
+// Data model for the corporate VPN dashboard.
+// Owned entirely by Prisma/Next.js — the Python backend (FastAPI) never touches
+// Postgres directly, it only talks to Marzban over HTTP.
+//
+// One Marzban server, one shared VPN subscription per corporation: every
+// employee of a Company sees the same Company.subscriptionUrl. There are no
+// per-employee VPN accounts, no groups, no multi-server failover.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+enum UserStatus {
+  ACTIVE
+  BANNED
+}
+
+enum CompanyStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum TicketTopic {
+  CONNECTION
+  SPEED
+  ACCOUNT
+  OTHER
+}
+
+enum TicketStatus {
+  OPEN
+  CLOSED
+}
+
+/// A purchasing corporation. Owns one shared Marzban/Hiddify subscription that
+/// every one of its employees sees after logging in with the same `code`.
+model Company {
+  id        String        @id @default(cuid())
+  name      String
+  /// Login code every user of this company types on `/login` alongside their
+  /// own email + password, e.g. "ACME-7F3K9Q2H".
+  code      String        @unique
+  /// True only for the single bootstrap "company" the platform admin belongs
+  /// to (seeded once, see prisma/seed.ts) — hidden from the corporations list.
+  isInternal Boolean      @default(false)
+  status    CompanyStatus @default(ACTIVE)
+  /// The one Marzban account shared by the whole corporation.
+  marzbanUsername String? @unique
+  /// The one Hiddify subscription link shared by the whole corporation.
+  subscriptionUrl String?
+  createdAt DateTime      @default(now())
+
+  users    User[]
+  tickets  SupportTicket[]
+  auditLog AdminAuditLog[]
+
+  @@map("companies")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  name         String?
+  role         Role
+  status       UserStatus @default(ACTIVE)
+  companyId    String
+  company      Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tickets SupportTicket[]
+
+  @@index([companyId])
+  @@map("users")
+}
+
+model SupportTicket {
+  id        String       @id @default(cuid())
+  companyId String
+  company   Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic     TicketTopic
+  message   String
+  status    TicketStatus @default(OPEN)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([companyId, status])
+  @@map("support_tickets")
+}
+
+/// Audit trail for sensitive admin actions (company create/suspend/rotate, employee ban, …).
+model AdminAuditLog {
+  id           String   @id @default(cuid())
+  companyId    String
+  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  adminId      String
+  action       String
+  targetUserId String?
+  details      String?
+  createdAt    DateTime @default(now())
+
+  @@index([companyId, createdAt])
+  @@map("admin_audit_logs")
+}
