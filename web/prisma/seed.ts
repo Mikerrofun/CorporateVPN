@@ -10,7 +10,7 @@ import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-import { generateCompanyCode } from "../src/lib/codes";
+import { generateCompanyCode } from "../src/5shared/lib/codes";
 
 const prisma = new PrismaClient();
 

@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
-import { requireAdminSession } from "@/lib/admin-guard";
-import { SignOutButton } from "@/components/SignOutButton";
+import { requireAdminSession } from "@/5shared/session/guards";
+import { SignOutButton } from "@/5shared/ui/SignOutButton";
 
 const NAV = [
   { id: "nav-admin-companies", href: "/admin", label: "Корпорации" },

@@ -1,13 +1,13 @@
-import { requireAdminSession } from "@/lib/admin-guard";
-import { backend } from "@/lib/backend-client";
-import { formatBytes, isRecentlyOnline } from "@/lib/format";
-import { prisma } from "@/lib/prisma";
-import { CopyInline } from "@/components/CopyInline";
-import { StatusDot } from "@/components/StatusDot";
-import { CreateCompanyForm } from "@/components/admin/CreateCompanyForm";
-import { CreateEmployeeForm } from "@/components/admin/CreateEmployeeForm";
-import { CompanyActions } from "@/components/admin/CompanyActions";
-import { EmployeesTable } from "@/components/admin/EmployeesTable";
+import { requireAdminSession } from "@/5shared/session/guards";
+import { backend } from "@/5shared/api/backend-client";
+import { formatBytes, isRecentlyOnline } from "@/5shared/lib/format";
+import { prisma } from "@/5shared/api/prisma";
+import { CopyInline } from "@/5shared/ui/CopyInline";
+import { StatusDot } from "@/5shared/ui/StatusDot";
+import { CreateCompanyForm } from "@/3features/create-company/ui/CreateCompanyForm";
+import { CreateEmployeeForm } from "@/3features/create-employee/ui/CreateEmployeeForm";
+import { CompanyActions } from "@/4entities/company/ui/CompanyActions";
+import { EmployeesTable } from "@/4entities/employee/ui/EmployeesTable";
 
 async function usageFor(username: string | null) {
   if (!username) return null;

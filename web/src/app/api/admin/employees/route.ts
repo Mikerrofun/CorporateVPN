@@ -2,8 +2,8 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { requireAdminSession } from "@/lib/admin-guard";
-import { prisma } from "@/lib/prisma";
+import { requireAdminSession } from "@/5shared/session/guards";
+import { prisma } from "@/5shared/api/prisma";
 
 const bodySchema = z.object({
   companyId: z.string().min(1),

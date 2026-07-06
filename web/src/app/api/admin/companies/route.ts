@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { requireAdminSession } from "@/lib/admin-guard";
-import { backend, BackendError } from "@/lib/backend-client";
-import { generateCompanyCode } from "@/lib/codes";
-import { prisma } from "@/lib/prisma";
+import { requireAdminSession } from "@/5shared/session/guards";
+import { backend, BackendError } from "@/5shared/api/backend-client";
+import { generateCompanyCode } from "@/5shared/lib/codes";
+import { prisma } from "@/5shared/api/prisma";
 
 const bodySchema = z.object({
   name: z.string().min(2).max(120),
