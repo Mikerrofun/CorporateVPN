@@ -6,52 +6,93 @@ import { prisma } from "@/5shared/api/prisma";
 
 export const authOptions: AuthOptions = {
   session: { strategy: "jwt" },
-  pages: { signIn: "/login" },
+  pages: {
+    signIn: "/login",
+  },
   providers: [
+    // ─── Провайдер 1: Вход администратора ───────────────────────────────────
+    // Логин + пароль из .env. Admin не хранится в БД.
+    // Страница: /admin/login
     CredentialsProvider({
-      name: "credentials",
+      id: "admin-login",
+      name: "Admin",
       credentials: {
-        email: { label: "Email", type: "email" },
+        login: { label: "Login", type: "text" },
         password: { label: "Password", type: "password" },
-        companyCode: { label: "Corporation code", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials.password || !credentials.companyCode) return null;
-        const company = await prisma.company.findUnique({
-          where: { code: credentials.companyCode.trim().toUpperCase() },
-          select: { id: true },
-        });
-        if (!company) return null;
+        if (!credentials?.login || !credentials.password) return null;
 
-        const user = await prisma.user.findUnique({ where: { email: credentials.email.toLowerCase() } });
-        if (!user || user.status !== "ACTIVE" || user.companyId !== company.id) return null;
+        const adminLogin = process.env.ADMIN_LOGIN;
+        const adminHash = process.env.ADMIN_PASSWORD_HASH;
+        if (!adminLogin || !adminHash) return null;
+
+        if (credentials.login.trim() !== adminLogin) return null;
+
+        const valid = await bcrypt.compare(credentials.password, adminHash);
+        if (!valid) return null;
+
+        return {
+          id: "admin",
+          name: "Admin",
+          email: null,
+          isAdmin: true,
+          groupId: null,
+        };
+      },
+    }),
+
+    // ─── Провайдер 2: Вход сотрудника ───────────────────────────────────────
+    // Email + пароль. Сотрудник зарегистрирован через /register по invite-коду.
+    // Страница: /login
+    CredentialsProvider({
+      id: "employee-login",
+      name: "Employee",
+      credentials: {
+        login: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.login || !credentials.password) return null;
+
+        const user = await prisma.user.findUnique({
+          where: { login: credentials.login.toLowerCase().trim() },
+          include: { group: { select: { status: true } } },
+        });
+
+        if (!user) return null;
+        if (user.status !== "ACTIVE") return null;
+        if (user.group.status !== "ACTIVE") return null;
 
         const valid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!valid) return null;
+
         return {
           id: user.id,
-          email: user.email,
-          name: user.name ?? user.email,
-          role: user.role,
-          companyId: user.companyId,
+          name: user.name ?? user.login,
+          email: user.login,
+          isAdmin: false,
+          groupId: user.groupId,
         };
       },
     }),
   ],
+
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
-        token.companyId = user.companyId;
         token.uid = user.id;
+        token.isAdmin = user.isAdmin;
+        token.groupId = user.groupId;
       }
       return token;
     },
+
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.uid as string;
-        session.user.role = token.role as "ADMIN" | "EMPLOYEE";
-        session.user.companyId = token.companyId as string;
+        session.user.id = token.uid;
+        session.user.isAdmin = token.isAdmin;
+        session.user.groupId = token.groupId;
       }
       return session;
     },
