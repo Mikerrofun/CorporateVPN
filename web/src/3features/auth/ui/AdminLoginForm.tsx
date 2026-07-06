@@ -1,29 +1,9 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useAdminLoginForm } from "../model";
 
 export function AdminLoginForm() {
-  const router = useRouter();
-  const [login, setLogin] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    const res = await signIn("admin-login", { login, password, redirect: false });
-    setLoading(false);
-    if (res?.error) {
-      setError("Неверный логин или пароль");
-      return;
-    }
-    router.push("/admin");
-    router.refresh();
-  }
+  const { form, onSubmit, error, loading } = useAdminLoginForm();
 
   return (
     <div className="card w-full max-w-sm border border-white/[0.06] bg-panel/40 backdrop-blur-2xl p-8 shadow-2xl">
@@ -33,16 +13,32 @@ export function AdminLoginForm() {
         <p className="mt-1 text-sm text-slate-400">Вход для администратора</p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label className="label">Логин</label>
-          <input className="input" type="text" required autoComplete="username"
-            placeholder="admin" value={login} onChange={(e) => setLogin(e.target.value)} />
+          <input 
+            className="input" 
+            type="text" 
+            autoComplete="username"
+            placeholder="admin" 
+            {...form.register("login")}
+          />
+          {form.formState.errors.login && (
+            <p className="mt-1 text-xs text-red-400">{form.formState.errors.login.message}</p>
+          )}
         </div>
         <div>
           <label className="label">Пароль</label>
-          <input className="input" type="password" required autoComplete="current-password"
-            placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <input 
+            className="input" 
+            type="password" 
+            autoComplete="current-password"
+            placeholder="••••••••" 
+            {...form.register("password")}
+          />
+          {form.formState.errors.password && (
+            <p className="mt-1 text-xs text-red-400">{form.formState.errors.password.message}</p>
+          )}
         </div>
         {error && (
           <p className="rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">{error}</p>
