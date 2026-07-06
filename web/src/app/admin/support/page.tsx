@@ -1,6 +1,6 @@
-import { requireAdminSession } from "@/lib/admin-guard";
-import { prisma } from "@/lib/prisma";
-import { TicketRow } from "@/components/admin/TicketRow";
+import { requireAdminSession } from "@/5shared/session/guards";
+import { prisma } from "@/5shared/api/prisma";
+import { TicketRow } from "@/4entities/ticket/ui/TicketRow";
 
 const TOPIC_LABELS: Record<string, string> = {
   CONNECTION: "Подключение",

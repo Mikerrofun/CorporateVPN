@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 
-import { authOptions } from "@/lib/auth";
+import { authOptions } from "@/5shared/session/auth";
 
 /** Platform admin: the only role allowed into /admin. Creates corporations and
  * manages their employees. */

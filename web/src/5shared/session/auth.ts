@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import type { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/5shared/api/prisma";
 
 export const authOptions: AuthOptions = {
   session: { strategy: "jwt" },

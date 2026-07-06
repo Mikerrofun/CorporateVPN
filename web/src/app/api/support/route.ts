@@ -2,8 +2,8 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/5shared/session/auth";
+import { prisma } from "@/5shared/api/prisma";
 
 const bodySchema = z.object({
   topic: z.enum(["CONNECTION", "SPEED", "ACCOUNT", "OTHER"]),

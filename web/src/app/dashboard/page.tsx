@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth";
 
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { ConnectPanel } from "@/components/ConnectPanel";
+import { authOptions } from "@/5shared/session/auth";
+import { prisma } from "@/5shared/api/prisma";
+import { ConnectPanel } from "@/2widgets/connect-panel/ui/ConnectPanel";
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);

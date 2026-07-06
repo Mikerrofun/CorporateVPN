@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth";
 
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { SupportForm } from "@/components/SupportForm";
+import { authOptions } from "@/5shared/session/auth";
+import { prisma } from "@/5shared/api/prisma";
+import { SupportForm } from "@/3features/support/ui/SupportForm";
 
 const TOPIC_LABELS: Record<string, string> = {
   CONNECTION: "Подключение",

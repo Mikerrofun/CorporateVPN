@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
-import { requireEmployeeSession } from "@/lib/admin-guard";
-import { prisma } from "@/lib/prisma";
-import { SignOutButton } from "@/components/SignOutButton";
+import { requireEmployeeSession } from "@/5shared/session/guards";
+import { prisma } from "@/5shared/api/prisma";
+import { SignOutButton } from "@/5shared/ui/SignOutButton";
 
 const NAV = [
   { id: "nav-profile", href: "/dashboard", label: "Профиль и подключение" },
