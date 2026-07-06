@@ -22,7 +22,6 @@ export default async function AdminSupportPage() {
             <div className="flex items-center justify-between gap-4">
               <div className="text-sm">
                 <span className="font-mono text-slate-300">{t.user.login}</span>
-                {t.user.name && <span className="text-slate-500"> · {t.user.name}</span>}
                 <span className="text-slate-500"> · группа: {t.group.name}</span>
               </div>
               <div className="flex items-center gap-2 shrink-0">

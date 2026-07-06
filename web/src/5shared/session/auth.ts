@@ -69,7 +69,7 @@ export const authOptions: AuthOptions = {
 
         return {
           id: user.id,
-          name: user.name ?? user.login,
+          name: user.login,
           email: user.login,
           isAdmin: false,
           groupId: user.groupId,

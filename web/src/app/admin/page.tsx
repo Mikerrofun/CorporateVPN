@@ -58,8 +58,7 @@ export default async function AdminPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-wider text-slate-500">
-                    <th className="pb-2">Email</th>
-                    <th className="pb-2">Имя</th>
+                    <th className="pb-2">Логин</th>
                     <th className="pb-2">Статус</th>
                   </tr>
                 </thead>
@@ -67,7 +66,6 @@ export default async function AdminPage() {
                   {group.members.map((u) => (
                     <tr key={u.id}>
                       <td className="py-2 font-mono text-slate-300">{u.login}</td>
-                      <td className="py-2 text-slate-400">{u.name ?? "—"}</td>
                       <td className="py-2">
                         <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${u.status === "ACTIVE" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
                           {u.status === "ACTIVE" ? "Активен" : "Заблокирован"}

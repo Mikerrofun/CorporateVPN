@@ -3,7 +3,7 @@ import { requireAdminSession } from "@/5shared/session/guards";
 
 /**
  * Получить все тикеты для админ панели.
- * Показывает: юзер (login, name), группа (name), время, тема, сообщение, статус.
+ * Показывает: юзер (login), группа (name), время, тема, сообщение, статус.
  * Вызывается напрямую из Server Component.
  */
 export async function getTickets() {
@@ -19,7 +19,7 @@ export async function getTickets() {
       status: true,
       createdAt: true,
       user: {
-        select: { id: true, login: true, name: true },
+        select: { id: true, login: true },
       },
       group: {
         select: { id: true, name: true },

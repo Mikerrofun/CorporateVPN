@@ -68,10 +68,9 @@ model Group {
 /// Сотрудник компании. Регистрируется по inviteCode группы.
 model User {
   id           String     @id @default(cuid())
-  /// Email адрес — используется как логин при входе.
+  /// Логин — используется при входе.
   login        String     @unique
   passwordHash String
-  name         String?
   status       UserStatus @default(ACTIVE)
 
   groupId String

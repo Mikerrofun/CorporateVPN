@@ -7,7 +7,7 @@ export type GroupWithCount = Group & {
 
 /** Группа с участниками — для детальной страницы */
 export type GroupWithMembers = Group & {
-  members: Pick<User, "id" | "login" | "name" | "status">[];
+  members: Pick<User, "id" | "login" | "status">[];
   _count: { members: number };
 };
 

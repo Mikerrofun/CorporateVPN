@@ -5,9 +5,8 @@ import { z } from "zod";
 import { prisma } from "@/5shared/api/prisma";
 
 const bodySchema = z.object({
-  email: z.string().email("Некорректный email"),
+  login: z.string().min(1, "Введите логин"),
   password: z.string().min(8, "Пароль минимум 8 символов"),
-  name: z.string().min(1).optional(),
   inviteCode: z.string().min(1, "Инвайт-код обязателен"),
 });
 
@@ -17,8 +16,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
 
-  const { email, password, name, inviteCode } = parsed.data;
-  const login = email.toLowerCase().trim();
+  const { login, password, inviteCode } = parsed.data;
+  const normalizedLogin = login.toLowerCase().trim();
 
   // Найти группу по invite-коду
   const group = await prisma.group.findUnique({
@@ -36,19 +35,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Группа заполнена" }, { status: 409 });
   }
 
-  // Проверить что email не занят
-  const existing = await prisma.user.findUnique({ where: { login } });
+  // Проверить что логин не занят
+  const existing = await prisma.user.findUnique({ where: { login: normalizedLogin } });
   if (existing) {
-    return NextResponse.json({ error: "Email уже зарегистрирован" }, { status: 409 });
+    return NextResponse.json({ error: "Логин уже зарегистрирован" }, { status: 409 });
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
 
   await prisma.user.create({
     data: {
-      login,
+      login: normalizedLogin,
       passwordHash,
-      name: name ?? null,
       status: "ACTIVE",
       groupId: group.id,
     },

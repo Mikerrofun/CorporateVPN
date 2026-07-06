@@ -1,4 +1,4 @@
-import { AdminLoginForm } from "@/3features/auth/ui/AdminLoginForm";
+import { AdminLoginForm } from "@/3features/admin-login";
 
 export default function AdminLoginPage() {
   return (
