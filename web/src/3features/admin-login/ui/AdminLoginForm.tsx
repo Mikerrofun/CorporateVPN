@@ -4,7 +4,7 @@ import { Input, SubmitButton, FormCard, ErrorMessage } from "@/5shared/ui";
 import { useAdminLogin } from "../model/useAdminLogin";
 
 export function AdminLoginForm() {
-  const { register, handleSubmit, errors, isSubmitting, serverError } = useAdminLogin();
+  const { register, handleSubmit, errors, isSubmitting, serverError, passwordVisibility } = useAdminLogin();
 
   return (
     <FormCard 
@@ -28,6 +28,7 @@ export function AdminLoginForm() {
           type="password"
           placeholder="••••••••"
           autoComplete="current-password"
+          passwordVisibility={passwordVisibility}
           error={errors.password?.message}
           {...register("password")}
         />

@@ -4,7 +4,7 @@ import { Input, SubmitButton, FormCard, ErrorMessage, AuthLink } from "@/5shared
 import { useUserLogin } from "../model/useUserLogin";
 
 export function UserLoginForm() {
-  const { register, handleSubmit, errors, isSubmitting, serverError } = useUserLogin();
+  const { register, handleSubmit, errors, isSubmitting, serverError, passwordVisibility } = useUserLogin();
 
   return (
     <FormCard 
@@ -25,6 +25,7 @@ export function UserLoginForm() {
           label="Пароль"
           type="password"
           placeholder="••••••••"
+          passwordVisibility={passwordVisibility}
           error={errors.password?.message}
           {...register("password")}
         />

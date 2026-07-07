@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Input } from "@/5shared/ui";
+import { Input, usePasswordVisibility } from "@/5shared/ui";
 
 export function CreateEmployeeForm({ companyId }: { companyId: string }) {
   const router = useRouter();
@@ -12,6 +12,7 @@ export function CreateEmployeeForm({ companyId }: { companyId: string }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const passwordVisibility = usePasswordVisibility();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -84,6 +85,7 @@ export function CreateEmployeeForm({ companyId }: { companyId: string }) {
           id={`employee-password-${companyId}`}
           label="Пароль"
           type="password"
+          passwordVisibility={passwordVisibility}
           minLength={8}
           required
           placeholder="Минимум 8 знаков"

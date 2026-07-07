@@ -2,10 +2,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { usePasswordVisibility } from "@/5shared/ui";
 import { userRegisterSchema, UserRegisterFormValues } from "./userRegisterSchema";
 
 export function useUserRegister() {
   const [serverError, setServerError] = useState<string | null>(null);
+  const passwordVisibility = usePasswordVisibility();
   const [wasSubmitted, setWasSubmitted] = useState(false);
 
   const form = useForm<UserRegisterFormValues>({
@@ -48,5 +50,6 @@ export function useUserRegister() {
     errors: form.formState.errors,
     isSubmitting: form.formState.isSubmitting,
     serverError,
+    passwordVisibility,
   };
 }

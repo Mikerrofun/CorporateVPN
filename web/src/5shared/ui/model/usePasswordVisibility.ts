@@ -2,7 +2,12 @@
 
 import { useCallback, useState } from "react";
 
-export function usePasswordVisibility() {
+export interface PasswordVisibility {
+  isVisible: boolean;
+  toggle: () => void;
+}
+
+export function usePasswordVisibility(): PasswordVisibility {
   const [isVisible, setIsVisible] = useState(false);
 
   const toggle = useCallback(() => {
