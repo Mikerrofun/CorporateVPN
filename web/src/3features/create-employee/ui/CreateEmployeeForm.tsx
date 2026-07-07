@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { PasswordToggle, usePasswordVisibility } from "@/5shared/ui";
 
 export function CreateEmployeeForm({ companyId }: { companyId: string }) {
   const router = useRouter();
@@ -11,6 +12,7 @@ export function CreateEmployeeForm({ companyId }: { companyId: string }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { isVisible, toggle, inputType } = usePasswordVisibility();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -87,16 +89,19 @@ export function CreateEmployeeForm({ companyId }: { companyId: string }) {
         </div>
         <div>
           <label htmlFor={`employee-password-${companyId}`} className="label">Пароль</label>
-          <input
-            id={`employee-password-${companyId}`}
-            className="input"
-            type="password"
-            minLength={8}
-            required
-            placeholder="Минимум 8 знаков"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className="relative">
+            <input
+              id={`employee-password-${companyId}`}
+              className="input pr-11"
+              type={inputType}
+              minLength={8}
+              required
+              placeholder="Минимум 8 знаков"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <PasswordToggle isVisible={isVisible} onToggle={toggle} />
+          </div>
         </div>
 
         {error && (
