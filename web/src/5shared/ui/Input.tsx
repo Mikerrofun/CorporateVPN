@@ -11,8 +11,8 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, className, type, ...props }, ref) => {
-    const { isVisible, toggle, inputType } = usePasswordVisibility();
     const isPassword = type === 'password';
+    const { isVisible, toggle } = usePasswordVisibility();
 
     return (
       <div>
@@ -20,7 +20,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <div className="relative">
           <input
             ref={ref}
-            type={isPassword ? inputType : type}
+            type={isPassword && isVisible ? 'text' : type}
             className={`input ${isPassword ? 'pr-11' : ''} ${className || ''}`}
             {...props}
           />

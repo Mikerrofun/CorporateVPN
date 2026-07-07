@@ -9,7 +9,5 @@ export function usePasswordVisibility() {
     setIsVisible((prev) => !prev);
   }, []);
 
-  const inputType: "text" | "password" = isVisible ? "text" : "password";
-
-  return { isVisible, toggle, inputType };
+  return { isVisible, toggle };
 }
