@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 
 import "./globals.css";
 import { Providers } from "./providers";
+import { Redirector } from "@/5shared/session";
 
 const inter = Inter({ subsets: ["latin", "cyrillic"] });
 
@@ -21,7 +22,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="pointer-events-none absolute -right-48 top-1/3 h-[600px] w-[600px] rounded-full bg-indigo-600/10 blur-[130px]" />
           
           <div className="relative z-10 flex min-h-screen flex-col">
-            <Providers>{children}</Providers>
+            <Providers>
+              <Redirector />
+              {children}
+            </Providers>
           </div>
         </div>
       </body>

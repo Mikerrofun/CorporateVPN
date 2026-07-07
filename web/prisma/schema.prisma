@@ -1,10 +1,9 @@
-// Data model for the corporate VPN dashboard.
-// Owned entirely by Prisma/Next.js — the Python backend (FastAPI) never touches
-// Postgres directly, it only talks to Marzban over HTTP.
+// Data model для корпоративного VPN сервиса.
+// Один деплой = одна компания-клиент.
+// Admin хранится в .env (ADMIN_LOGIN + ADMIN_PASSWORD_HASH) — не в БД.
+// БД содержит только группы сотрудников и самих сотрудников.
 //
-// One Marzban server, one shared VPN subscription per corporation: every
-// employee of a Company sees the same Company.subscriptionUrl. There are no
-// per-employee VPN accounts, no groups, no multi-server failover.
+// Python backend (FastAPI) не трогает Postgres напрямую — только Marzban через HTTP.
 
 generator client {
   provider = "prisma-client-js"
@@ -15,17 +14,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  ADMIN
-  EMPLOYEE
-}
+// ─── Enums ────────────────────────────────────────────────────────────────────
 
 enum UserStatus {
   ACTIVE
   BANNED
 }
 
-enum CompanyStatus {
+enum GroupStatus {
   ACTIVE
   SUSPENDED
 }
@@ -42,54 +38,58 @@ enum TicketStatus {
   CLOSED
 }
 
-/// A purchasing corporation. Owns one shared Marzban/Hiddify subscription that
-/// every one of its employees sees after logging in with the same `code`.
-model Company {
-  id        String        @id @default(cuid())
-  name      String
-  /// Login code every user of this company types on `/login` alongside their
-  /// own email + password, e.g. "ACME-7F3K9Q2H".
-  code      String        @unique
-  /// True only for the single bootstrap "company" the platform admin belongs
-  /// to (seeded once, see prisma/seed.ts) — hidden from the corporations list.
-  isInternal Boolean      @default(false)
-  status    CompanyStatus @default(ACTIVE)
-  /// The one Marzban account shared by the whole corporation.
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+/// Группа сотрудников. У каждой группы свой Marzban аккаунт и ссылка подписки.
+/// Admin создаёт группу и задаёт inviteCode + maxMembers.
+model Group {
+  id         String      @id @default(cuid())
+  name       String
+  /// Инвайт-код который admin раздаёт сотрудникам для регистрации.
+  inviteCode String      @unique
+  /// Максимальное количество участников — задаёт admin при создании.
+  maxMembers Int
+  status     GroupStatus @default(ACTIVE)
+
+  /// Marzban аккаунт группы (один на всю группу).
   marzbanUsername String? @unique
-  /// The one Hiddify subscription link shared by the whole corporation.
+  /// Ссылка подписки Hiddify/Outline — одна на всю группу.
   subscriptionUrl String?
-  createdAt DateTime      @default(now())
 
-  users    User[]
-  tickets  SupportTicket[]
-  auditLog AdminAuditLog[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@map("companies")
+  members User[]
+  tickets SupportTicket[]
+
+  @@map("groups")
 }
 
+/// Сотрудник компании. Регистрируется по inviteCode группы.
 model User {
   id           String     @id @default(cuid())
-  email        String     @unique
+  /// Логин — используется при входе.
+  login        String     @unique
   passwordHash String
-  name         String?
-  role         Role
   status       UserStatus @default(ACTIVE)
-  companyId    String
-  company      Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  groupId String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   tickets SupportTicket[]
 
-  @@index([companyId])
+  @@index([groupId])
   @@map("users")
 }
 
+/// Обращение в поддержку. Уведомление уходит в Telegram-бота.
 model SupportTicket {
   id        String       @id @default(cuid())
-  companyId String
-  company   Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  groupId   String
+  group     Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
   userId    String
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   topic     TicketTopic
@@ -98,21 +98,19 @@ model SupportTicket {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  @@index([companyId, status])
+  @@index([groupId, status])
   @@map("support_tickets")
 }
 
-/// Audit trail for sensitive admin actions (company create/suspend/rotate, employee ban, …).
+/// Аудит-лог действий администратора.
 model AdminAuditLog {
   id           String   @id @default(cuid())
-  companyId    String
-  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  adminId      String
+  adminLogin   String
   action       String
   targetUserId String?
   details      String?
   createdAt    DateTime @default(now())
 
-  @@index([companyId, createdAt])
+  @@index([createdAt])
   @@map("admin_audit_logs")
 }
