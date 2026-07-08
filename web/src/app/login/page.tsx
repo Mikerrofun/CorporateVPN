@@ -1,4 +1,4 @@
-import { UserLoginForm } from "@/3features/user-login";
+import { UserLoginForm } from "@/3features/auth/user-login";
 
 export default function LoginPage() {
   return (

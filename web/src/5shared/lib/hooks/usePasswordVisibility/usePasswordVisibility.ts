@@ -1,11 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-
-export interface PasswordVisibility {
-  isVisible: boolean;
-  toggle: () => void;
-}
+import type { PasswordVisibility } from "./usePasswordVisibility.types";
 
 export function usePasswordVisibility(): PasswordVisibility {
   const [isVisible, setIsVisible] = useState(false);

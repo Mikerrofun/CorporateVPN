@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
-import { usePasswordVisibility } from "@/5shared/ui";
+import { usePasswordVisibility } from "@/5shared/lib/hooks";
 import { adminLoginSchema, AdminLoginFormValues } from "./adminLoginSchema";
 
 export function useAdminLogin() {
