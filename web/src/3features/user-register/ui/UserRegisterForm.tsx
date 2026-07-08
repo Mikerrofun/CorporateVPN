@@ -1,10 +1,10 @@
 "use client";
 
-import { Input, SubmitButton, FormCard, ErrorMessage, AuthLink } from "@/5shared/ui";
+import { Input, SubmitButton, FormCard, FormErrorBlock, AuthLink } from "@/5shared/ui";
 import { useUserRegister } from "../model/useUserRegister";
 
 export function UserRegisterForm() {
-  const { register, handleSubmit, errors, isSubmitting, serverError } = useUserRegister();
+  const { register, handleSubmit, formErrors, submitCount, isSubmitting, passwordVisibility } = useUserRegister();
 
   return (
     <FormCard 
@@ -13,12 +13,13 @@ export function UserRegisterForm() {
       subtitle="Создайте свой аккаунт"
       badgeColor="blue"
     >
+      <FormErrorBlock messages={formErrors} resetKey={submitCount} />
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="Логин"
           type="text"
           placeholder="username"
-          error={errors.login?.message}
           {...register("login")}
         />
         
@@ -26,7 +27,7 @@ export function UserRegisterForm() {
           label="Пароль"
           type="password"
           placeholder="Минимум 8 символов"
-          error={errors.password?.message}
+          passwordVisibility={passwordVisibility}
           {...register("password")}
         />
         
@@ -35,13 +36,10 @@ export function UserRegisterForm() {
           type="text"
           placeholder="XXXXXXXX"
           className="uppercase tracking-wider"
-          error={errors.inviteCode?.message}
           {...register("inviteCode", {
             setValueAs: (v) => v.toUpperCase()
           })}
         />
-        
-        {serverError && <ErrorMessage message={serverError} />}
         
         <SubmitButton loading={isSubmitting} className="w-full py-3">
           Зарегистрироваться
@@ -52,7 +50,7 @@ export function UserRegisterForm() {
         Инвайт-код получите у администратора вашей компании.
       </p>
       
-      <AuthLink href="/login" text="Уже есть аккаунт? Войти" />
+      <AuthLink href="/login" text="Уже есть аккаунт?" linkText="Войти" />
     </FormCard>
   );
 }

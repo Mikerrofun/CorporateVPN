@@ -3,13 +3,15 @@ import Link from 'next/link';
 interface AuthLinkProps {
   href: string;
   text: string;
+  linkText: string;
 }
 
-export function AuthLink({ href, text }: AuthLinkProps) {
+export function AuthLink({ href, text, linkText }: AuthLinkProps) {
   return (
-    <p className="mt-6 text-center text-xs text-slate-500">
-      <Link href={href} className="text-blue-400 hover:text-blue-300 transition-colors">
-        {text}
+    <p className="mt-6 text-center text-xs">
+      <span className="text-slate-500">{text}</span>{' '}
+      <Link href={href} className="text-accent">
+        {linkText}
       </Link>
     </p>
   );

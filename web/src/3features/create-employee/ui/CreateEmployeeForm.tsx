@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Input, usePasswordVisibility } from "@/5shared/ui";
 
 export function CreateEmployeeForm({ companyId }: { companyId: string }) {
   const router = useRouter();
@@ -11,6 +12,7 @@ export function CreateEmployeeForm({ companyId }: { companyId: string }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const passwordVisibility = usePasswordVisibility();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -63,41 +65,33 @@ export function CreateEmployeeForm({ companyId }: { companyId: string }) {
       </div>
 
       <form className="grid gap-4 md:grid-cols-3" onSubmit={submit}>
-        <div>
-          <label htmlFor={`employee-email-${companyId}`} className="label">Email / Логин</label>
-          <input
-            id={`employee-email-${companyId}`}
-            className="input"
-            type="email"
-            required
-            placeholder="user@domain.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor={`employee-name-${companyId}`} className="label">Имя сотрудника</label>
-          <input
-            id={`employee-name-${companyId}`}
-            className="input"
-            placeholder="Иван Иванов"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor={`employee-password-${companyId}`} className="label">Пароль</label>
-          <input
-            id={`employee-password-${companyId}`}
-            className="input"
-            type="password"
-            minLength={8}
-            required
-            placeholder="Минимум 8 знаков"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
+        <Input
+          id={`employee-email-${companyId}`}
+          label="Email / Логин"
+          type="email"
+          required
+          placeholder="user@domain.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <Input
+          id={`employee-name-${companyId}`}
+          label="Имя сотрудника"
+          placeholder="Иван Иванов"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <Input
+          id={`employee-password-${companyId}`}
+          label="Пароль"
+          type="password"
+          passwordVisibility={passwordVisibility}
+          minLength={8}
+          required
+          placeholder="Минимум 8 знаков"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
         {error && (
           <div className="flex gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-sm text-rose-400 md:col-span-3">

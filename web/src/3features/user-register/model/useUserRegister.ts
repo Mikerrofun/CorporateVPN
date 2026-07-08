@@ -2,11 +2,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { usePasswordVisibility } from "@/5shared/ui";
 import { userRegisterSchema, UserRegisterFormValues } from "./userRegisterSchema";
 
 export function useUserRegister() {
   const [serverError, setServerError] = useState<string | null>(null);
-  const [wasSubmitted, setWasSubmitted] = useState(false);
+  const passwordVisibility = usePasswordVisibility();
 
   const form = useForm<UserRegisterFormValues>({
     resolver: zodResolver(userRegisterSchema),
@@ -16,7 +17,6 @@ export function useUserRegister() {
   });
 
   async function handleSubmit(values: UserRegisterFormValues) {
-    setWasSubmitted(true);
     setServerError(null);
 
     const res = await fetch("/api/auth/register", {
@@ -42,11 +42,20 @@ export function useUserRegister() {
     // Редирект обрабатывается через Redirector
   }
 
+  const fieldMessages = Object.values(form.formState.errors)
+    .map((error) => error?.message)
+    .filter((message): message is string => Boolean(message));
+
+  const formErrors = Array.from(
+    new Set(serverError ? [...fieldMessages, serverError] : fieldMessages)
+  );
+
   return {
     register: form.register,
     handleSubmit: form.handleSubmit(handleSubmit),
-    errors: form.formState.errors,
+    formErrors,
+    submitCount: form.formState.submitCount,
     isSubmitting: form.formState.isSubmitting,
-    serverError,
+    passwordVisibility,
   };
 }
