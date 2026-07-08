@@ -4,7 +4,7 @@ import { Input, SubmitButton, FormCard, FormErrorBlock, AuthLink } from "@/5shar
 import { useUserRegister } from "../model/useUserRegister";
 
 export function UserRegisterForm() {
-  const { register, handleSubmit, formErrors, isSubmitting, passwordVisibility } = useUserRegister();
+  const { register, handleSubmit, formErrors, submitCount, isSubmitting, passwordVisibility } = useUserRegister();
 
   return (
     <FormCard 
@@ -13,7 +13,7 @@ export function UserRegisterForm() {
       subtitle="Создайте свой аккаунт"
       badgeColor="blue"
     >
-      <FormErrorBlock messages={formErrors} />
+      <FormErrorBlock messages={formErrors} resetKey={submitCount} />
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input

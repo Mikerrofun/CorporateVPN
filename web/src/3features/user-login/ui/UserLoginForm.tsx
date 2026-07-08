@@ -4,7 +4,7 @@ import { Input, SubmitButton, FormCard, FormErrorBlock, AuthLink } from "@/5shar
 import { useUserLogin } from "../model/useUserLogin";
 
 export function UserLoginForm() {
-  const { register, handleSubmit, formErrors, isSubmitting, passwordVisibility } = useUserLogin();
+  const { register, handleSubmit, formErrors, submitCount, isSubmitting, passwordVisibility } = useUserLogin();
 
   return (
     <FormCard 
@@ -12,7 +12,7 @@ export function UserLoginForm() {
       title="Личный кабинет"
       badgeColor="blue"
     >
-      <FormErrorBlock messages={formErrors} />
+      <FormErrorBlock messages={formErrors} resetKey={submitCount} />
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input

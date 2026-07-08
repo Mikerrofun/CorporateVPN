@@ -4,7 +4,7 @@ import { Input, SubmitButton, FormCard, FormErrorBlock } from "@/5shared/ui";
 import { useAdminLogin } from "../model/useAdminLogin";
 
 export function AdminLoginForm() {
-  const { register, handleSubmit, formErrors, isSubmitting, passwordVisibility } = useAdminLogin();
+  const { register, handleSubmit, formErrors, submitCount, isSubmitting, passwordVisibility } = useAdminLogin();
 
   return (
     <FormCard 
@@ -13,7 +13,7 @@ export function AdminLoginForm() {
       subtitle="Вход для администратора"
       badgeColor="indigo"
     >
-      <FormErrorBlock messages={formErrors} />
+      <FormErrorBlock messages={formErrors} resetKey={submitCount} />
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input

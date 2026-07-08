@@ -1,18 +1,36 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircleIcon } from "./icons/AlertCircleIcon";
 
+const AUTO_HIDE_MS = 2000;
+
 interface FormErrorBlockProps {
   messages: string[];
+  /** Меняется на каждый сабмит, чтобы блок показывался заново даже с теми же ошибками */
+  resetKey?: number;
 }
 
-export function FormErrorBlock({ messages }: FormErrorBlockProps) {
+export function FormErrorBlock({ messages, resetKey = 0 }: FormErrorBlockProps) {
   const messageKey = messages.join(",");
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (messages.length === 0) {
+      setIsVisible(false);
+      return;
+    }
+
+    setIsVisible(true);
+    const timer = setTimeout(() => setIsVisible(false), AUTO_HIDE_MS);
+
+    return () => clearTimeout(timer);
+  }, [messageKey, messages.length, resetKey]);
 
   return (
     <AnimatePresence initial={false} mode="wait">
-      {messages.length > 0 && (
+      {isVisible && messages.length > 0 && (
         <motion.div
           key={messageKey}
           initial={{ opacity: 0, y: -8 }}

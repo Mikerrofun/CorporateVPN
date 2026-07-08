@@ -8,7 +8,6 @@ import { userRegisterSchema, UserRegisterFormValues } from "./userRegisterSchema
 export function useUserRegister() {
   const [serverError, setServerError] = useState<string | null>(null);
   const passwordVisibility = usePasswordVisibility();
-  const [wasSubmitted, setWasSubmitted] = useState(false);
 
   const form = useForm<UserRegisterFormValues>({
     resolver: zodResolver(userRegisterSchema),
@@ -18,7 +17,6 @@ export function useUserRegister() {
   });
 
   async function handleSubmit(values: UserRegisterFormValues) {
-    setWasSubmitted(true);
     setServerError(null);
 
     const res = await fetch("/api/auth/register", {
@@ -56,6 +54,7 @@ export function useUserRegister() {
     register: form.register,
     handleSubmit: form.handleSubmit(handleSubmit),
     formErrors,
+    submitCount: form.formState.submitCount,
     isSubmitting: form.formState.isSubmitting,
     passwordVisibility,
   };

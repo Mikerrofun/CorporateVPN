@@ -8,7 +8,6 @@ import { adminLoginSchema, AdminLoginFormValues } from "./adminLoginSchema";
 export function useAdminLogin() {
   const [serverError, setServerError] = useState<string | null>(null);
   const passwordVisibility = usePasswordVisibility();
-  const [wasSubmitted, setWasSubmitted] = useState(false);
 
   const form = useForm<AdminLoginFormValues>({
     resolver: zodResolver(adminLoginSchema),
@@ -18,7 +17,6 @@ export function useAdminLogin() {
   });
 
   async function handleSubmit(values: AdminLoginFormValues) {
-    setWasSubmitted(true);
     setServerError(null);
 
     const res = await signIn("admin-login", {
@@ -47,6 +45,7 @@ export function useAdminLogin() {
     register: form.register,
     handleSubmit: form.handleSubmit(handleSubmit),
     formErrors,
+    submitCount: form.formState.submitCount,
     isSubmitting: form.formState.isSubmitting,
     passwordVisibility,
   };

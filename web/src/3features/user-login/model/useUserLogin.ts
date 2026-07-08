@@ -8,7 +8,6 @@ import { userLoginSchema, UserLoginFormValues } from "./userLoginSchema";
 export function useUserLogin() {
   const [serverError, setServerError] = useState<string | null>(null);
   const passwordVisibility = usePasswordVisibility();
-  const [wasSubmitted, setWasSubmitted] = useState(false);
 
   const form = useForm<UserLoginFormValues>({
     resolver: zodResolver(userLoginSchema),
@@ -18,7 +17,6 @@ export function useUserLogin() {
   });
 
   async function handleSubmit(values: UserLoginFormValues) {
-    setWasSubmitted(true);
     setServerError(null);
 
     const res = await signIn("employee-login", {
@@ -47,6 +45,7 @@ export function useUserLogin() {
     register: form.register,
     handleSubmit: form.handleSubmit(handleSubmit),
     formErrors,
+    submitCount: form.formState.submitCount,
     isSubmitting: form.formState.isSubmitting,
     passwordVisibility,
   };
