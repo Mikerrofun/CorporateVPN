@@ -3,4 +3,5 @@ export { usePasswordVisibility, type PasswordVisibility } from './model/usePassw
 export { SubmitButton } from './SubmitButton';
 export { FormCard } from './FormCard';
 export { ErrorMessage } from './ErrorMessage';
+export { FormErrorBlock } from './FormErrorBlock';
 export { AuthLink } from './AuthLink';

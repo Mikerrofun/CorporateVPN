@@ -35,12 +35,19 @@ export function useAdminLogin() {
     // Редирект обрабатывается через Redirector
   }
 
+  const fieldMessages = Object.values(form.formState.errors)
+    .map((error) => error?.message)
+    .filter((message): message is string => Boolean(message));
+
+  const formErrors = Array.from(
+    new Set(serverError ? [...fieldMessages, serverError] : fieldMessages)
+  );
+
   return {
     register: form.register,
     handleSubmit: form.handleSubmit(handleSubmit),
-    errors: form.formState.errors,
+    formErrors,
     isSubmitting: form.formState.isSubmitting,
-    serverError,
     passwordVisibility,
   };
 }

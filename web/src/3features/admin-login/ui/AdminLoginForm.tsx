@@ -1,10 +1,10 @@
 "use client";
 
-import { Input, SubmitButton, FormCard, ErrorMessage } from "@/5shared/ui";
+import { Input, SubmitButton, FormCard, FormErrorBlock } from "@/5shared/ui";
 import { useAdminLogin } from "../model/useAdminLogin";
 
 export function AdminLoginForm() {
-  const { register, handleSubmit, errors, isSubmitting, serverError, passwordVisibility } = useAdminLogin();
+  const { register, handleSubmit, formErrors, isSubmitting, passwordVisibility } = useAdminLogin();
 
   return (
     <FormCard 
@@ -13,13 +13,14 @@ export function AdminLoginForm() {
       subtitle="Вход для администратора"
       badgeColor="indigo"
     >
+      <FormErrorBlock messages={formErrors} />
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="Логин"
           type="text"
           placeholder="admin"
           autoComplete="username"
-          error={errors.login?.message}
           {...register("login")}
         />
         
@@ -29,11 +30,8 @@ export function AdminLoginForm() {
           placeholder="••••••••"
           autoComplete="current-password"
           passwordVisibility={passwordVisibility}
-          error={errors.password?.message}
           {...register("password")}
         />
-        
-        {serverError && <ErrorMessage message={serverError} />}
         
         <SubmitButton loading={isSubmitting} className="w-full py-3">
           Войти

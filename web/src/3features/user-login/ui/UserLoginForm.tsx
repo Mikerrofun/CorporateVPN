@@ -1,10 +1,10 @@
 "use client";
 
-import { Input, SubmitButton, FormCard, ErrorMessage, AuthLink } from "@/5shared/ui";
+import { Input, SubmitButton, FormCard, FormErrorBlock, AuthLink } from "@/5shared/ui";
 import { useUserLogin } from "../model/useUserLogin";
 
 export function UserLoginForm() {
-  const { register, handleSubmit, errors, isSubmitting, serverError, passwordVisibility } = useUserLogin();
+  const { register, handleSubmit, formErrors, isSubmitting, passwordVisibility } = useUserLogin();
 
   return (
     <FormCard 
@@ -12,12 +12,13 @@ export function UserLoginForm() {
       title="Личный кабинет"
       badgeColor="blue"
     >
+      <FormErrorBlock messages={formErrors} />
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="Логин"
           type="text"
           placeholder="username"
-          error={errors.login?.message}
           {...register("login")}
         />
         
@@ -26,18 +27,15 @@ export function UserLoginForm() {
           type="password"
           placeholder="••••••••"
           passwordVisibility={passwordVisibility}
-          error={errors.password?.message}
           {...register("password")}
         />
-        
-        {serverError && <ErrorMessage message={serverError} />}
         
         <SubmitButton loading={isSubmitting} className="w-full py-3">
           Войти
         </SubmitButton>
       </form>
       
-      <AuthLink href="/register" text="Нет аккаунта? Зарегистрироваться" />
+      <AuthLink href="/register" text="Нет аккаунта?" linkText="Зарегистрироваться" />
     </FormCard>
   );
 }
