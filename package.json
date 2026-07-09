@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "rate-limiter-flexible": "^11.2.0"
+    "framer-motion": "^12.42.2"
   }
 }
