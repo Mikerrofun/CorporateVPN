@@ -40,7 +40,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ errorCode: ErrorCode.RATE_LIMIT_EXCEEDED }, { status: 429 });
   }
 
-  // Найти группу по invite-коду
   const group = await prisma.group.findUnique({
     where: { inviteCode },
     include: { _count: { select: { members: true } } },
@@ -56,7 +55,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ errorCode: ErrorCode.GROUP_FULL }, { status: 409 });
   }
 
-  // Проверить что логин не занят
   const existing = await prisma.user.findUnique({ where: { login: normalizedLogin } });
   if (existing) {
     return NextResponse.json({ errorCode: ErrorCode.LOGIN_ALREADY_EXISTS }, { status: 409 });

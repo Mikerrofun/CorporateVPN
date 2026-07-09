@@ -3,7 +3,6 @@ import { RateLimiterRedis } from "rate-limiter-flexible";
 import { redis } from "@/5shared/api/redis";
 import type { RateLimitConfig } from "./config";
 
-/** Кэш лимитеров по конфигу — не создаём новый на каждый запрос */
 const limiters = new Map<string, RateLimiterRedis>();
 
 function getLimiter(config: RateLimitConfig): RateLimiterRedis | null {
@@ -16,7 +15,7 @@ function getLimiter(config: RateLimitConfig): RateLimiterRedis | null {
       storeClient: redis,
       points: config.points,
       duration: config.duration,
-      execEvenly: false, // Token Bucket: попытки расходуются сразу
+      execEvenly: false, 
     });
     limiters.set(cacheKey, limiter);
   }
@@ -30,13 +29,12 @@ function getLimiter(config: RateLimitConfig): RateLimiterRedis | null {
  */
 export async function checkRateLimit(key: string, config: RateLimitConfig): Promise<boolean> {
   const limiter = getLimiter(config);
-  if (!limiter) return true; // REDIS_URL не задан (dev)
+  if (!limiter) return true;
 
   try {
     await limiter.consume(key, 1);
     return true;
   } catch (err) {
-    // RateLimiterRes = лимит превышен; иначе — ошибка соединения с Redis
     if (err && typeof err === "object" && "remainingPoints" in err) {
       return false;
     }

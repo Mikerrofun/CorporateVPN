@@ -15,7 +15,6 @@ export function Redirector() {
   const previousStatus = useRef<string>(status);
 
   useEffect(() => {
-    // Отслеживаем изменение статуса с non-authenticated на authenticated
     if (previousStatus.current !== 'authenticated' && status === 'authenticated') {
       const isAdmin = session?.user?.isAdmin;
       

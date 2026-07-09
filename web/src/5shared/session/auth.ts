@@ -14,6 +14,7 @@ import { checkRateLimit, RATE_LIMITS } from "@/5shared/lib/rateLimit";
  * Блокировка при превышении ЛЮБОГО лимита.
  * Бросает Error(ErrorCode) — NextAuth передаст его в res.error на клиенте.
  */
+
 async function enforceLoginRateLimit(
   headers: Record<string, string | string[] | undefined> | undefined,
   login: string,
