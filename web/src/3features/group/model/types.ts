@@ -11,7 +11,5 @@ export type GroupWithMembers = Group & {
   _count: { members: number };
 };
 
-/** Результат Server Action — единый формат ответа */
-export type ActionResult<T = void> =
-  | { ok: true; data?: T }
-  | { ok: false; error: string };
+/** Результат Server Action — реэкспорт из shared для обратной совместимости */
+export type { ActionResult } from "@/5shared/lib/types/action-result";

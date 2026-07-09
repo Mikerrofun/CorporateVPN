@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Input, usePasswordVisibility } from "@/5shared/ui";
+import { Input } from "@/5shared/ui";
+import { usePasswordVisibility } from "@/5shared/lib/hooks";
 
 export function CreateEmployeeForm({ companyId }: { companyId: string }) {
   const router = useRouter();

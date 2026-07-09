@@ -2,7 +2,7 @@
 
 import { forwardRef } from 'react';
 import { PasswordToggle } from './PasswordToggle';
-import type { PasswordVisibility } from './model/usePasswordVisibility';
+import type { PasswordVisibility } from '@/5shared/lib/hooks';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;

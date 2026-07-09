@@ -1,4 +1,4 @@
-import { UserRegisterForm } from "@/3features/user-register";
+import { UserRegisterForm } from "@/3features/auth/user-register";
 
 export default function RegisterPage() {
   return (
