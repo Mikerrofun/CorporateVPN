@@ -69,6 +69,7 @@ export async function groupAction(
     return { ok: true };
   } catch (err) {
     const detail = err instanceof BackendError ? err.message : "unknown error";
-    return { ok: false, errorCode: ErrorCode.SOMETHING_WRONG, details: `Действие не выполнено (${detail})` };
+    console.error(`[groupAction] Действие не выполнено (${detail})`);
+    return { ok: false, errorCode: ErrorCode.SOMETHING_WRONG };
   }
 }

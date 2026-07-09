@@ -34,9 +34,11 @@ export function useAdminLogin() {
     // Редирект обрабатывается через Redirector
   }
 
+  // В схемах message = ErrorCode — переводим код в текст
   const fieldMessages = Object.values(form.formState.errors)
     .map((error) => error?.message)
-    .filter((message): message is string => Boolean(message));
+    .filter((message): message is string => Boolean(message))
+    .map((code) => getErrorMessage(code));
 
   const formErrors = Array.from(
     new Set(serverError ? [...fieldMessages, serverError] : fieldMessages)

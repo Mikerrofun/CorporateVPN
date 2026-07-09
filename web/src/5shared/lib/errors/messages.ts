@@ -3,9 +3,9 @@ import { ErrorCode } from "./codes";
 /**
  * Единый словарь: код ошибки → человекочитаемый текст.
  *
- * Здесь описаны ВСЕ типизированные ошибки приложения.
- * Динамические сообщения (zod-валидация, детали бэкенда) сюда не входят —
- * они приходят с сервера готовым текстом в поле `details` и показываются напрямую.
+ * Здесь описаны ВСЕ ошибки приложения, включая zod-валидацию:
+ * в схемах message = ErrorCode, клиент переводит код через getErrorMessage.
+ * Это единственный источник пользовательских текстов ошибок.
  */
 export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   // ── Auth & Session ────────────────────────────────────────────────
@@ -31,6 +31,15 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
 
   // ── Support ───────────────────────────────────────────────────────
   [ErrorCode.TICKET_NOT_FOUND]: "Тикет не найден",
+
+  // ── Validation (zod) ──────────────────────────────────────────────
+  [ErrorCode.FIELDS_REQUIRED]: "Заполните все поля",
+  [ErrorCode.PASSWORD_MIN_LENGTH_6]: "Пароль минимум 6 символов",
+  [ErrorCode.PASSWORD_MIN_LENGTH_8]: "Пароль минимум 8 символов",
+  [ErrorCode.GROUP_NAME_REQUIRED]: "Укажите название",
+  [ErrorCode.GROUP_REQUIRED]: "Укажите группу",
+  [ErrorCode.TOPIC_REQUIRED]: "Выберите тему обращения",
+  [ErrorCode.MESSAGE_REQUIRED]: "Напишите сообщение",
 };
 
 /**

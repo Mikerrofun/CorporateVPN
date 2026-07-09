@@ -1,5 +1,7 @@
 import { z } from "zod";
+import { ErrorCode } from "@/5shared/lib/errors";
 
+// message = ErrorCode: клиент переводит код в текст через getErrorMessage
 export const userRegisterSchema = z
   .object({
     login: z.string(),
@@ -16,7 +18,7 @@ export const userRegisterSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["login"],
-          message: "Заполните все поля",
+          message: ErrorCode.FIELDS_REQUIRED,
         });
       }
 
@@ -24,7 +26,7 @@ export const userRegisterSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["password"],
-          message: "Заполните все поля",
+          message: ErrorCode.FIELDS_REQUIRED,
         });
       }
 
@@ -32,7 +34,7 @@ export const userRegisterSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["inviteCode"],
-          message: "Заполните все поля",
+          message: ErrorCode.FIELDS_REQUIRED,
         });
       }
       return;
@@ -42,7 +44,7 @@ export const userRegisterSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["password"],
-        message: "Пароль минимум 8 символов",
+        message: ErrorCode.PASSWORD_MIN_LENGTH_8,
       });
     }
   });

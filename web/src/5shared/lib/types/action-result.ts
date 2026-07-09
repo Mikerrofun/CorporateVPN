@@ -2,10 +2,9 @@ import type { ErrorCode } from "@/5shared/lib/errors";
 
 /**
  * Результат Server Action — единый формат ответа.
- * errorCode — типизированный код для логики клиента,
- * details — опциональные динамические детали (zod-сообщения, ошибки бэкенда).
- * Клиент приоритезирует details если есть, иначе маппит errorCode.
+ * errorCode — типизированный код ошибки; клиент переводит его
+ * в текст через единый словарь ERROR_MESSAGES (getErrorMessage).
  */
 export type ActionResult<T = void> =
   | { ok: true; data?: T }
-  | { ok: false; errorCode: ErrorCode; details?: string };
+  | { ok: false; errorCode: ErrorCode };

@@ -27,4 +27,28 @@ export enum ErrorCode {
 
   // ── Support ───────────────────────────────────────────────────────
   TICKET_NOT_FOUND = "TICKET_NOT_FOUND",
+
+  // ── Validation (zod) ──────────────────────────────────────────────
+  FIELDS_REQUIRED = "FIELDS_REQUIRED",
+  PASSWORD_MIN_LENGTH_6 = "PASSWORD_MIN_LENGTH_6",
+  PASSWORD_MIN_LENGTH_8 = "PASSWORD_MIN_LENGTH_8",
+  GROUP_NAME_REQUIRED = "GROUP_NAME_REQUIRED",
+  GROUP_REQUIRED = "GROUP_REQUIRED",
+  TOPIC_REQUIRED = "TOPIC_REQUIRED",
+  MESSAGE_REQUIRED = "MESSAGE_REQUIRED",
+}
+
+/**
+ * Приводит произвольную строку к ErrorCode.
+ * Используется для zod-issue.message (в схемах message = код)
+ * и любых внешних строк. Неизвестное значение → fallback.
+ */
+export function toErrorCode(
+  value: string | null | undefined,
+  fallback: ErrorCode = ErrorCode.VALIDATION_ERROR,
+): ErrorCode {
+  if (value && Object.values(ErrorCode).includes(value as ErrorCode)) {
+    return value as ErrorCode;
+  }
+  return fallback;
 }

@@ -1,5 +1,7 @@
 import { z } from "zod";
+import { ErrorCode } from "@/5shared/lib/errors";
 
+// message = ErrorCode: клиент переводит код в текст через getErrorMessage
 export const adminLoginSchema = z
   .object({
     login: z.string(),
@@ -9,23 +11,20 @@ export const adminLoginSchema = z
     const login = data.login.trim();
     const password = data.password;
 
-    if (login.length < 1 || password.length < 1) {
-      if (login.length < 1) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["login"],
-          message: "Заполните все поля",
-        });
-      }
+    if (login.length < 1) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["login"],
+        message: ErrorCode.FIELDS_REQUIRED,
+      });
+    }
 
-      if (password.length < 1) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["password"],
-          message: "Заполните все поля",
-        });
-      }
-      return;
+    if (password.length < 1) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["password"],
+        message: ErrorCode.FIELDS_REQUIRED,
+      });
     }
   });
 

@@ -29,8 +29,7 @@ export function useUserRegister() {
     const data = await res.json();
 
     if (!res.ok) {
-      // details приоритетнее (динамические сообщения), иначе маппим errorCode
-      setServerError(data.details ?? getErrorMessage(data.errorCode, "Ошибка регистрации"));
+      setServerError(getErrorMessage(data.errorCode, "Ошибка регистрации"));
       return;
     }
 
@@ -44,9 +43,11 @@ export function useUserRegister() {
     // Редирект обрабатывается через Redirector
   }
 
+  // В схемах message = ErrorCode — переводим код в текст
   const fieldMessages = Object.values(form.formState.errors)
     .map((error) => error?.message)
-    .filter((message): message is string => Boolean(message));
+    .filter((message): message is string => Boolean(message))
+    .map((code) => getErrorMessage(code));
 
   const formErrors = Array.from(
     new Set(serverError ? [...fieldMessages, serverError] : fieldMessages)

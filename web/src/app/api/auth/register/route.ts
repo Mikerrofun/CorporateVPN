@@ -3,21 +3,22 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/5shared/api/prisma";
-import { ErrorCode } from "@/5shared/lib/errors";
+import { ErrorCode, toErrorCode } from "@/5shared/lib/errors";
 import { getClientIp } from "@/5shared/lib/network";
 import { checkRateLimit, RATE_LIMITS } from "@/5shared/lib/rateLimit";
 
+// message = ErrorCode: клиент переводит код в текст через getErrorMessage
 const bodySchema = z.object({
-  login: z.string().min(1, "Введите логин"),
-  password: z.string().min(8, "Пароль минимум 8 символов"),
-  inviteCode: z.string().min(1, "Инвайт-код обязателен"),
+  login: z.string().min(1, ErrorCode.FIELDS_REQUIRED),
+  password: z.string().min(8, ErrorCode.PASSWORD_MIN_LENGTH_8),
+  inviteCode: z.string().min(1, ErrorCode.FIELDS_REQUIRED),
 });
 
 export async function POST(req: Request) {
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json(
-      { errorCode: ErrorCode.VALIDATION_ERROR, details: parsed.error.issues[0].message },
+      { errorCode: toErrorCode(parsed.error.issues[0].message) },
       { status: 400 },
     );
   }

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { backend, BackendError } from "@/5shared/api/backend-client";
 import { prisma } from "@/5shared/api/prisma";
 import { requireAdminSession } from "@/5shared/session/guards";
-import { ErrorCode } from "@/5shared/lib/errors";
+import { ErrorCode, toErrorCode } from "@/5shared/lib/errors";
 import { createGroupSchema, type CreateGroupInput } from "../model/schemas";
 import type { ActionResult } from "../model/types";
 
@@ -19,7 +19,8 @@ export async function createGroup(input: CreateGroupInput): Promise<ActionResult
 
   const parsed = createGroupSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, errorCode: ErrorCode.VALIDATION_ERROR, details: parsed.error.issues[0].message };
+    // В схемах message = ErrorCode
+    return { ok: false, errorCode: toErrorCode(parsed.error.issues[0].message) };
   }
 
   const { name, maxMembers } = parsed.data;
@@ -65,6 +66,7 @@ export async function createGroup(input: CreateGroupInput): Promise<ActionResult
     // Откатываем если VPN не выдался
     await prisma.group.delete({ where: { id: group.id } }).catch(() => null);
     const detail = err instanceof BackendError ? err.message : "unknown error";
-    return { ok: false, errorCode: ErrorCode.SOMETHING_WRONG, details: `Не удалось выдать VPN (${detail})` };
+    console.error(`[createGroup] Не удалось выдать VPN (${detail})`);
+    return { ok: false, errorCode: ErrorCode.SOMETHING_WRONG };
   }
 }
