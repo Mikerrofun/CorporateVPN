@@ -3,7 +3,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { usePasswordVisibility } from "@/5shared/lib/hooks";
+import { ErrorCode } from "@/5shared/lib/errors";
 import { adminLoginSchema, AdminLoginFormValues } from "./adminLoginSchema";
+
+const ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
+  [ErrorCode.RATE_LIMIT_EXCEEDED]: "Слишком много попыток. Попробуйте позже.",
+  [ErrorCode.FORBIDDEN]: "Доступ запрещен",
+};
 
 export function useAdminLogin() {
   const [serverError, setServerError] = useState<string | null>(null);
@@ -26,7 +32,7 @@ export function useAdminLogin() {
     });
 
     if (res?.error) {
-      setServerError("Неверный логин или пароль");
+      setServerError(ERROR_MESSAGES[res.error as ErrorCode] ?? "Неверный логин или пароль");
       return;
     }
 

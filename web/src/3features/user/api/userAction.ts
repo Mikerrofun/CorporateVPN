@@ -4,18 +4,19 @@ import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/5shared/api/prisma";
 import { requireAdminSession } from "@/5shared/session/guards";
+import { ErrorCode } from "@/5shared/lib/errors";
 import type { ActionResult } from "@/3features/group/model/types";
 import { userActionSchema, type UserAction } from "../model/schemas";
 
 export async function userAction(userId: string, input: UserAction): Promise<ActionResult> {
   const session = await requireAdminSession();
-  if (!session) return { ok: false, error: "Unauthorized" };
+  if (!session) return { ok: false, errorCode: ErrorCode.UNAUTHORIZED };
 
   const parsed = userActionSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Некорректный запрос" };
+  if (!parsed.success) return { ok: false, errorCode: ErrorCode.VALIDATION_ERROR };
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) return { ok: false, error: "Сотрудник не найден" };
+  if (!user) return { ok: false, errorCode: ErrorCode.USER_NOT_FOUND };
 
   const audit = (action: string, details?: string) =>
     prisma.adminAuditLog
@@ -50,9 +51,9 @@ export async function userAction(userId: string, input: UserAction): Promise<Act
         where: { id: parsed.data.groupId },
         include: { _count: { select: { members: true } } },
       });
-      if (!targetGroup) return { ok: false, error: "Группа не найдена" };
+      if (!targetGroup) return { ok: false, errorCode: ErrorCode.GROUP_NOT_FOUND };
       if (targetGroup._count.members >= targetGroup.maxMembers) {
-        return { ok: false, error: "Группа заполнена" };
+        return { ok: false, errorCode: ErrorCode.GROUP_FULL };
       }
       await prisma.user.update({
         where: { id: user.id },

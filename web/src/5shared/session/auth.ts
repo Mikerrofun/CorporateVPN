@@ -3,6 +3,35 @@ import type { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 import { prisma } from "@/5shared/api/prisma";
+import { ErrorCode } from "@/5shared/lib/errors";
+import { getClientIp } from "@/5shared/lib/network";
+import { checkRateLimit, RATE_LIMITS } from "@/5shared/lib/rateLimit";
+
+/**
+ * Двухуровневый rate limiting для входа:
+ * Level 1 (IP): 20 попыток / 10 мин — защита от credential stuffing.
+ * Level 2 (Account, IP+login): 5 попыток / 10 мин — защита от brute force.
+ * Блокировка при превышении ЛЮБОГО лимита.
+ * Бросает Error(ErrorCode) — NextAuth передаст его в res.error на клиенте.
+ */
+async function enforceLoginRateLimit(
+  headers: Record<string, string | string[] | undefined> | undefined,
+  login: string,
+): Promise<void> {
+  const ip = getClientIp(headers ?? {});
+  if (ip === "unknown" && process.env.NODE_ENV === "production") {
+    throw new Error(ErrorCode.FORBIDDEN);
+  }
+
+  const [ipAllowed, accountAllowed] = await Promise.all([
+    checkRateLimit(`ratelimit:login:ip:${ip}`, RATE_LIMITS.LOGIN_BY_IP),
+    checkRateLimit(`ratelimit:login:account:${ip}:${login}`, RATE_LIMITS.LOGIN_BY_ACCOUNT),
+  ]);
+
+  if (!ipAllowed || !accountAllowed) {
+    throw new Error(ErrorCode.RATE_LIMIT_EXCEEDED);
+  }
+}
 
 export const authOptions: AuthOptions = {
   session: { strategy: "jwt" },
@@ -20,14 +49,17 @@ export const authOptions: AuthOptions = {
         login: { label: "Login", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.login || !credentials.password) return null;
+
+        const login = credentials.login.trim();
+        await enforceLoginRateLimit(req?.headers, login.toLowerCase());
 
         const adminLogin = process.env.ADMIN_LOGIN;
         const adminHash = process.env.ADMIN_PASSWORD_HASH;
         if (!adminLogin || !adminHash) return null;
 
-        if (credentials.login.trim() !== adminLogin) return null;
+        if (login !== adminLogin) return null;
 
         const valid = await bcrypt.compare(credentials.password, adminHash);
         if (!valid) return null;
@@ -35,7 +67,6 @@ export const authOptions: AuthOptions = {
         return {
           id: "admin",
           name: "Admin",
-          email: null,
           isAdmin: true,
           groupId: null,
         };
@@ -52,11 +83,14 @@ export const authOptions: AuthOptions = {
         login: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.login || !credentials.password) return null;
 
+        const normalizedLogin = credentials.login.toLowerCase().trim();
+        await enforceLoginRateLimit(req?.headers, normalizedLogin);
+
         const user = await prisma.user.findUnique({
-          where: { login: credentials.login.toLowerCase().trim() },
+          where: { login: normalizedLogin },
           include: { group: { select: { status: true } } },
         });
 
@@ -70,7 +104,6 @@ export const authOptions: AuthOptions = {
         return {
           id: user.id,
           name: user.login,
-          email: user.login,
           isAdmin: false,
           groupId: user.groupId,
         };

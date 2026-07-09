@@ -3,7 +3,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { usePasswordVisibility } from "@/5shared/lib/hooks";
+import { ErrorCode } from "@/5shared/lib/errors";
 import { userRegisterSchema, UserRegisterFormValues } from "./userRegisterSchema";
+
+const ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
+  [ErrorCode.RATE_LIMIT_EXCEEDED]: "Слишком много попыток. Попробуйте позже.",
+  [ErrorCode.INVALID_INVITE_CODE]: "Инвайт-код недействителен",
+  [ErrorCode.GROUP_SUSPENDED]: "Группа приостановлена",
+  [ErrorCode.GROUP_FULL]: "Группа заполнена",
+  [ErrorCode.LOGIN_ALREADY_EXISTS]: "Логин уже зарегистрирован",
+  [ErrorCode.FORBIDDEN]: "Доступ запрещен",
+};
 
 export function useUserRegister() {
   const [serverError, setServerError] = useState<string | null>(null);
@@ -28,7 +38,10 @@ export function useUserRegister() {
     const data = await res.json();
 
     if (!res.ok) {
-      setServerError(data.error ?? "Ошибка регистрации");
+      // details приоритетнее (динамические сообщения), иначе маппим errorCode
+      setServerError(
+        data.details ?? ERROR_MESSAGES[data.errorCode as ErrorCode] ?? "Ошибка регистрации",
+      );
       return;
     }
 

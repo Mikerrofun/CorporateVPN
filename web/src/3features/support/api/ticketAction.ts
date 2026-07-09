@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { prisma } from "@/5shared/api/prisma";
 import { requireAdminSession } from "@/5shared/session/guards";
+import { ErrorCode } from "@/5shared/lib/errors";
 import type { ActionResult } from "@/3features/group/model/types";
 
 const schema = z.object({
@@ -16,13 +17,13 @@ export async function ticketAction(
   input: { action: "close" | "reopen" },
 ): Promise<ActionResult> {
   const session = await requireAdminSession();
-  if (!session) return { ok: false, error: "Unauthorized" };
+  if (!session) return { ok: false, errorCode: ErrorCode.UNAUTHORIZED };
 
   const parsed = schema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Некорректный запрос" };
+  if (!parsed.success) return { ok: false, errorCode: ErrorCode.VALIDATION_ERROR };
 
   const ticket = await prisma.supportTicket.findUnique({ where: { id: ticketId } });
-  if (!ticket) return { ok: false, error: "Тикет не найден" };
+  if (!ticket) return { ok: false, errorCode: ErrorCode.TICKET_NOT_FOUND };
 
   await prisma.supportTicket.update({
     where: { id: ticket.id },
