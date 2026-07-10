@@ -6,14 +6,14 @@ export const userRegisterSchema = z
   .object({
     login: z.string(),
     password: z.string(),
-    inviteCode: z.string(),
+    groupCode: z.string(),
   })
   .superRefine((data, ctx) => {
     const login = data.login.trim();
     const password = data.password;
-    const inviteCode = data.inviteCode.trim();
+    const groupCode = data.groupCode.trim();
 
-    if (login.length < 1 || password.length < 1 || inviteCode.length < 1) {
+    if (login.length < 1 || password.length < 1 || groupCode.length < 1) {
       if (login.length < 1) {
         ctx.addIssue({
           code: "custom",
@@ -30,10 +30,10 @@ export const userRegisterSchema = z
         });
       }
 
-      if (inviteCode.length < 1) {
+      if (groupCode.length < 1) {
         ctx.addIssue({
           code: "custom",
-          path: ["inviteCode"],
+          path: ["groupCode"],
           message: ErrorCode.FIELDS_REQUIRED,
         });
       }

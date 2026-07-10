@@ -41,12 +41,12 @@ enum TicketStatus {
 // ─── Models ───────────────────────────────────────────────────────────────────
 
 /// Группа сотрудников. У каждой группы свой Marzban аккаунт и ссылка подписки.
-/// Admin создаёт группу и задаёт inviteCode + maxMembers.
+/// Admin создаёт группу и задаёт maxMembers.
 model Group {
   id         String      @id @default(cuid())
   name       String
-  /// Инвайт-код который admin раздаёт сотрудникам для регистрации.
-  inviteCode String      @unique
+  /// Внутренний код группы — идентификатор объединения сотрудников.
+  groupCode  String      @unique
   /// Максимальное количество участников — задаёт admin при создании.
   maxMembers Int
   status     GroupStatus @default(ACTIVE)
@@ -61,11 +61,32 @@ model Group {
 
   members User[]
   tickets SupportTicket[]
+  invites Invite[]
 
   @@map("groups")
 }
 
-/// Сотрудник компании. Регистрируется по inviteCode группы.
+/// Персональный инвайт для регистрации сотрудника в группе.
+/// Admin генерирует коды, сотрудник использует код один раз.
+model Invite {
+  id      String @id @default(cuid())
+  /// Код который admin раздаёт сотрудникам для регистрации.
+  code    String @unique
+  groupId String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  /// Когда инвайт был использован (null = ещё не использован).
+  usedAt   DateTime?
+  usedById String?   @unique
+  usedBy   User?     @relation(fields: [usedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([groupId])
+  @@map("invites")
+}
+
+/// Сотрудник компании. Регистрируется по коду группы.
 model User {
   id           String     @id @default(cuid())
   /// Логин — используется при входе.
@@ -80,6 +101,8 @@ model User {
   updatedAt DateTime @updatedAt
 
   tickets SupportTicket[]
+  /// Инвайт по которому зарегистрировался сотрудник (под будущую персональную регистрацию).
+  invite  Invite?
 
   @@index([groupId])
   @@map("users")

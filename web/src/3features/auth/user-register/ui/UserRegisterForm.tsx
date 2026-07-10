@@ -36,7 +36,7 @@ export function UserRegisterForm() {
           type="text"
           placeholder="XXXXXXXX"
           className="uppercase tracking-wider"
-          {...register("inviteCode", {
+          {...register("groupCode", {
             setValueAs: (v) => v.toUpperCase()
           })}
         />

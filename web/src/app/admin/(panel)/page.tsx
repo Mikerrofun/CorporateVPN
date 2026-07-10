@@ -1,4 +1,5 @@
 import { getGroups } from "@/3features/group/api/getGroups";
+import { CreateGroupForm } from "@/3features/group";
 import { formatBytes } from "@/5shared/lib/format";
 
 export default async function AdminPage() {
@@ -28,10 +29,7 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      {/* TODO: CreateGroupForm */}
-      <div className="rounded-xl border border-dashed border-white/[0.08] p-4 text-sm text-slate-500">
-        Форма создания группы — в разработке
-      </div>
+      <CreateGroupForm />
 
       {/* Groups list */}
       <section className="grid gap-6">
@@ -41,7 +39,7 @@ export default async function AdminPage() {
               <div>
                 <h2 className="text-lg font-bold text-white">{group.name}</h2>
                 <p className="text-xs text-slate-400 mt-1">
-                  {group._count.members} / {group.maxMembers} участников · invite: <span className="font-mono text-slate-300">{group.inviteCode}</span>
+                  {group._count.members} / {group.maxMembers} участников · код: <span className="font-mono text-slate-300">{group.groupCode}</span>
                 </p>
                 {group.status === "SUSPENDED" && (
                   <span className="mt-2 inline-block rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs font-semibold text-rose-400 border border-rose-500/20">
