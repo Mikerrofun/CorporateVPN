@@ -94,6 +94,11 @@ model User {
   passwordHash String
   status       UserStatus @default(ACTIVE)
 
+  /// Индивидуальный Marzban-аккаунт сотрудника (заполняется при provisioning VPN).
+  marzbanUsername String? @unique
+  /// Ссылка подписки сотрудника (заполняется при provisioning VPN).
+  subscriptionUrl String?
+
   groupId String
   group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
 

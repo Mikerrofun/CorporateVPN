@@ -21,6 +21,12 @@ export enum ErrorCode {
   INVALID_INVITE_CODE = "INVALID_INVITE_CODE",
   VPN_NOT_PROVISIONED = "VPN_NOT_PROVISIONED",
 
+  // ── Invite operations ─────────────────────────────────────────────
+  INVITE_NOT_FOUND = "INVITE_NOT_FOUND",
+  INVITE_ALREADY_USED = "INVITE_ALREADY_USED",
+  NO_AVAILABLE_SLOTS = "NO_AVAILABLE_SLOTS",
+  VPN_PROVISIONING_FAILED = "VPN_PROVISIONING_FAILED",
+
   // ── User operations ───────────────────────────────────────────────
   USER_NOT_FOUND = "USER_NOT_FOUND",
   LOGIN_ALREADY_EXISTS = "LOGIN_ALREADY_EXISTS",

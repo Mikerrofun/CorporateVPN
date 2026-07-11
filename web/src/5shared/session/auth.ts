@@ -35,7 +35,8 @@ async function enforceLoginRateLimit(
 }
 
 export const authOptions: AuthOptions = {
-  session: { strategy: "jwt" },
+  // maxAge управляет и сроком JWT, и сроком сессии — держим сессию 2 месяца.
+  session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 60 },
   pages: {
     signIn: "/login",
   },

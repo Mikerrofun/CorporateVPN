@@ -12,7 +12,7 @@ export function useUserRegister() {
 
   const form = useForm<UserRegisterFormValues>({
     resolver: zodResolver(userRegisterSchema),
-    defaultValues: { login: "", password: "", groupCode: "" },
+    defaultValues: { login: "", password: "", code: "" },
     mode: "onSubmit",
     reValidateMode: "onSubmit",
   });

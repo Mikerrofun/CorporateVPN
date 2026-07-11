@@ -1,6 +1,7 @@
 import { getGroups } from "@/3features/group/api/getGroups";
 import { CreateGroupForm } from "@/3features/group";
-import { formatBytes } from "@/5shared/lib/format";
+import { InviteManager } from "@/3features/invite";
+
 
 export default async function AdminPage() {
   const groups = await getGroups();
@@ -74,6 +75,8 @@ export default async function AdminPage() {
                 </tbody>
               </table>
             )}
+
+            <InviteManager groupId={group.id} maxMembers={group.maxMembers} />
           </div>
         ))}
         {groups.length === 0 && (
