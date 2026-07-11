@@ -37,6 +37,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.PASSWORD_MIN_LENGTH_6]: "Пароль минимум 6 символов",
   [ErrorCode.PASSWORD_MIN_LENGTH_8]: "Пароль минимум 8 символов",
   [ErrorCode.GROUP_NAME_REQUIRED]: "Укажите название",
+  [ErrorCode.MAX_MEMBERS_RANGE]: "Участников от 1 до 10",
   [ErrorCode.GROUP_REQUIRED]: "Укажите группу",
   [ErrorCode.TOPIC_REQUIRED]: "Выберите тему обращения",
   [ErrorCode.MESSAGE_REQUIRED]: "Напишите сообщение",

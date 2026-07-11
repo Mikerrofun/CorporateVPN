@@ -11,7 +11,7 @@ import { checkRateLimit, RATE_LIMITS } from "@/5shared/lib/rateLimit";
 const bodySchema = z.object({
   login: z.string().min(1, ErrorCode.FIELDS_REQUIRED),
   password: z.string().min(8, ErrorCode.PASSWORD_MIN_LENGTH_8),
-  inviteCode: z.string().min(1, ErrorCode.FIELDS_REQUIRED),
+  groupCode: z.string().min(1, ErrorCode.FIELDS_REQUIRED),
 });
 
 export async function POST(req: Request) {
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { login, password, inviteCode } = parsed.data;
+  const { login, password, groupCode } = parsed.data;
   const normalizedLogin = login.toLowerCase().trim();
 
   // ── Rate limiting: 3 попытки / 15 мин по IP + login ──────────────────
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
   }
 
   const group = await prisma.group.findUnique({
-    where: { inviteCode },
+    where: { groupCode },
     include: { _count: { select: { members: true } } },
   });
 
