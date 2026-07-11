@@ -32,11 +32,11 @@ export function UserRegisterForm() {
         />
         
         <Input
-          label="Инвайт-код группы"
+          label="Код доступа"
           type="text"
-          placeholder="XXXXXXXX"
+          placeholder="XXX-XXXXXXXXX"
           className="uppercase tracking-wider"
-          {...register("groupCode", {
+          {...register("code", {
             setValueAs: (v) => v.toUpperCase()
           })}
         />
@@ -47,7 +47,7 @@ export function UserRegisterForm() {
       </form>
       
       <p className="mt-4 text-center text-xs text-slate-500">
-        Инвайт-код получите у администратора вашей компании.
+        Код доступа получите у администратора вашей компании.
       </p>
       
       <AuthLink href="/login" text="Уже есть аккаунт?" linkText="Войти" />

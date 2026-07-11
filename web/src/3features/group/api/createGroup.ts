@@ -5,12 +5,9 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/5shared/api/prisma";
 import { requireAdminSession } from "@/5shared/session/guards";
 import { ErrorCode, toErrorCode } from "@/5shared/lib/errors";
+import { generateGroupCode } from "@/5shared/lib/codes";
 import { createGroupSchema, type CreateGroupInput } from "../model/schemas";
 import type { ActionResult } from "../model/types";
-
-function generateGroupCode(): string {
-  return Math.random().toString(36).slice(2, 10).toUpperCase();
-}
 
 export async function createGroup(input: CreateGroupInput): Promise<ActionResult<{ groupCode: string }>> {
   const session = await requireAdminSession();
@@ -18,19 +15,12 @@ export async function createGroup(input: CreateGroupInput): Promise<ActionResult
 
   const parsed = createGroupSchema.safeParse(input);
   if (!parsed.success) {
-    // В схемах message = ErrorCode
     return { ok: false, errorCode: toErrorCode(parsed.error.issues[0].message) };
   }
 
   const { name, maxMembers } = parsed.data;
 
-  // Генерируем уникальный код группы
-  let groupCode = generateGroupCode();
-  for (let i = 0; i < 5; i++) {
-    const exists = await prisma.group.findUnique({ where: { groupCode } });
-    if (!exists) break;
-    groupCode = generateGroupCode();
-  }
+  const groupCode = await generateGroupCode();
 
   try {
     await prisma.group.create({
