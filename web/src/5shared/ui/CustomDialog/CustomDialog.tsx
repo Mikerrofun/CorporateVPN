@@ -17,10 +17,6 @@ interface CustomDialogProps {
   footer?: ReactNode;
 }
 
-/**
- * Компактная модалка на Radix Dialog в стиле темы проекта.
- * Контролируемая: open/onOpenChange управляются снаружи.
- */
 export function CustomDialog({
   trigger,
   open,

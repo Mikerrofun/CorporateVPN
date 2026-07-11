@@ -24,6 +24,7 @@ export function CreateGroupForm() {
 
           <form id="create-group-form" onSubmit={handleSubmit} className="space-y-4">
             <Input
+              autoComplete="off"
               label="Название"
               type="text"
               placeholder="Например: Отдел продаж"
