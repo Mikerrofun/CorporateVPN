@@ -64,7 +64,6 @@ export async function userAction(userId: string, input: UserAction): Promise<Act
         where: { id: user.id },
         data: {
           groupId: parsed.data.groupId,
-          // Копируем VPN-данные новой группы.
           marzbanUsername: targetGroup.marzbanUsername,
           subscriptionUrl: targetGroup.subscriptionUrl,
         },

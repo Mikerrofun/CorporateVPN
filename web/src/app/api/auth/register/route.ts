@@ -116,6 +116,8 @@ async function registerWithInviteCode(
   return createMember({ group: invite.group, login, passwordHash, inviteId: invite.id });
 }
 
+
+
 /**
  * Единая точка создания сотрудника — общая для GRP- и INV-регистрации.
  *
@@ -159,7 +161,6 @@ async function createMember(params: {
     };
   }
 
-  // Транзакция: (Group при первом User) + User (+ пометка Invite) — атомарно.
   await prisma.$transaction(async (tx) => {
     if (groupNeedsVpn) {
       await tx.group.update({
