@@ -94,9 +94,9 @@ model User {
   passwordHash String
   status       UserStatus @default(ACTIVE)
 
-  /// Индивидуальный Marzban-аккаунт сотрудника (заполняется при provisioning VPN).
-  marzbanUsername String? @unique
-  /// Ссылка подписки сотрудника (заполняется при provisioning VPN).
+  /// Marzban-аккаунт группы, скопированный на сотрудника (общий на всю группу — НЕ unique).
+  marzbanUsername String?
+  /// Ссылка подписки, скопированная из группы (общая на всю группу).
   subscriptionUrl String?
 
   groupId String

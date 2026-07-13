@@ -55,9 +55,19 @@ export async function userAction(userId: string, input: UserAction): Promise<Act
       if (targetGroup._count.members >= targetGroup.maxMembers) {
         return { ok: false, errorCode: ErrorCode.GROUP_FULL };
       }
+      // Целевая группа должна быть уже provisioned — иначе сотруднику
+      // нечего скопировать (VPN-доступ пропадёт).
+      if (!targetGroup.marzbanUsername || !targetGroup.subscriptionUrl) {
+        return { ok: false, errorCode: ErrorCode.NEW_GROUP_NO_VPN };
+      }
       await prisma.user.update({
         where: { id: user.id },
-        data: { groupId: parsed.data.groupId },
+        data: {
+          groupId: parsed.data.groupId,
+          // Копируем VPN-данные новой группы.
+          marzbanUsername: targetGroup.marzbanUsername,
+          subscriptionUrl: targetGroup.subscriptionUrl,
+        },
       });
       await audit("user_move", `from=${user.groupId} to=${parsed.data.groupId}`);
       break;

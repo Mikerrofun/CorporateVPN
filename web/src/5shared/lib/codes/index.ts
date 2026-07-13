@@ -1,1 +1,1 @@
-export { generateCompanyCode, generateGroupCode, generateInviteCode } from "./generateCode";
+export { generateGroupCode, generateInviteCode } from "./generateCode";
