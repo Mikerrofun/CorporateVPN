@@ -83,13 +83,34 @@ export type VpnProvisionResult = {
 };
 
 /**
+ * Dev-заглушка: VPN_PROVISION_MODE=mock в .env — не ходим в backend/Marzban,
+ * а генерируем фейковые данные. Только для разработки, в production
+ * переменная не должна быть задана.
+ */
+const VPN_PROVISION_MODE = process.env.VPN_PROVISION_MODE ?? "real";
+
+function mockProvision(): VpnProvisionResult {
+  const id = crypto.randomUUID().slice(0, 8);
+  return {
+    marzbanUsername: `mock_corp_${id}`,
+    subscriptionUrl: `https://mock.vpn.local/sub/${id}`,
+  };
+}
+
+/**
  * Создаёт Marzban-аккаунт для группы (один общий аккаунт на всю группу).
  * Вызывается при регистрации ПЕРВОГО пользователя группы.
+ *
+ * При VPN_PROVISION_MODE=mock возвращает фейковые данные без запроса
+ * к backend — для локальной разработки без Marzban.
  *
  * @throws BackendError — Marzban/backend ответил ошибкой (например 502)
  * @throws BackendUnavailableError — backend недоступен (сеть/таймаут)
  */
 export async function provisionVpnForGroup(): Promise<VpnProvisionResult> {
+  if (VPN_PROVISION_MODE === "mock") {
+    return mockProvision();
+  }
   const res = await backend.createVpnUser();
   return {
     marzbanUsername: res.username,
