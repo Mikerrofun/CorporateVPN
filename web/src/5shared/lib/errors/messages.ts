@@ -30,6 +30,8 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.INVITE_ALREADY_USED]: "Инвайт-код уже использован",
   [ErrorCode.NO_AVAILABLE_SLOTS]: "Нет свободных мест в группе",
   [ErrorCode.VPN_PROVISIONING_FAILED]: "Не удалось создать VPN-аккаунт. Попробуйте позже.",
+  [ErrorCode.VPN_BACKEND_UNAVAILABLE]: "VPN-сервис временно недоступен. Попробуйте позже.",
+  [ErrorCode.NEW_GROUP_NO_VPN]: "У новой группы ещё нет VPN-аккаунта",
 
   // ── User operations ───────────────────────────────────────────────
   [ErrorCode.USER_NOT_FOUND]: "Сотрудник не найден",
