@@ -1,5 +1,7 @@
+import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 
+import { prisma } from "@/5shared/api/prisma";
 import { authOptions } from "@/5shared/session/auth";
 
 /**
@@ -19,6 +21,18 @@ export async function requireAdminSession() {
 export async function requireEmployeeSession() {
   const session = await getServerSession(authOptions);
   if (!session || session.user.isAdmin || !session.user.groupId) return null;
+
+  // Живая проверка статуса: JWT-сессия живёт 2 месяца, бан должен
+  // действовать немедленно, а не после истечения токена.
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { status: true, group: { select: { status: true } } },
+  });
+  if (!user) return null;
+  if (user.status === "BANNED" || user.group.status === "SUSPENDED") {
+    redirect("/suspended");
+  }
+
   // groupId гарантированно string после проверки выше
   return session as typeof session & { user: { groupId: string } };
 }

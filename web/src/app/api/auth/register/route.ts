@@ -2,6 +2,11 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import {
+  BackendUnavailableError,
+  provisionVpnForGroup,
+  type VpnProvisionResult,
+} from "@/5shared/api/backend-client";
 import { prisma } from "@/5shared/api/prisma";
 import { ErrorCode, toErrorCode } from "@/5shared/lib/errors";
 import { getClientIp } from "@/5shared/lib/network";
@@ -79,16 +84,7 @@ async function registerWithGroupCode(
     return NextResponse.json({ errorCode: ErrorCode.GROUP_FULL }, { status: 409 });
   }
 
-  const user = await prisma.user.create({
-    data: { login, passwordHash, status: "ACTIVE", groupId: group.id },
-  });
-
-  // TODO: backend.createVpnUser(user) — при успехе сохранить
-  // user.marzbanUsername / user.subscriptionUrl. При ошибке VPN —
-  // удалить созданного User и вернуть VPN_PROVISIONING_FAILED.
-  void user;
-
-  return NextResponse.json({ ok: true }, { status: 201 });
+  return createMember({ group, login, passwordHash });
 }
 
 /** Регистрация по персональному коду: одноразовый инвайт, помечается использованным. */
@@ -117,23 +113,78 @@ async function registerWithInviteCode(
     return NextResponse.json({ errorCode: ErrorCode.GROUP_FULL }, { status: 409 });
   }
 
-  // Транзакция: создаём User и помечаем инвайт использованным атомарно.
-  const user = await prisma.$transaction(async (tx) => {
-    const created = await tx.user.create({
-      data: { login, passwordHash, status: "ACTIVE", groupId: invite.groupId },
-    });
-    await tx.invite.update({
-      where: { id: invite.id },
-      data: { usedAt: new Date(), usedById: created.id },
-    });
-    return created;
-  });
+  return createMember({ group: invite.group, login, passwordHash, inviteId: invite.id });
+}
 
-  // TODO: backend.createVpnUser(user) — при успехе сохранить
-  // user.marzbanUsername / user.subscriptionUrl. При ошибке VPN —
-  // откатить: удалить User и сбросить usedAt/usedById инвайта,
-  // вернуть VPN_PROVISIONING_FAILED.
-  void user;
+
+
+/**
+ * Единая точка создания сотрудника — общая для GRP- и INV-регистрации.
+ *
+ * VPN provisioning (одинаково для обоих потоков):
+ * - у группы уже есть VPN → копируем данные в нового User;
+ * - группа пустая → создаём Marzban-аккаунт ДО транзакции; при ошибке
+ *   backend ничего не записано (User не создан, Invite остаётся свободным).
+ *
+ * Единственное отличие потоков: при INV-коде инвайт помечается
+ * использованным в той же транзакции (передан inviteId).
+ */
+async function createMember(params: {
+  group: {
+    id: string;
+    marzbanUsername: string | null;
+    subscriptionUrl: string | null;
+  };
+  login: string;
+  passwordHash: string;
+  inviteId?: string;
+}) {
+  const { group, login, passwordHash, inviteId } = params;
+
+  const groupNeedsVpn = !group.marzbanUsername || !group.subscriptionUrl;
+  let vpn: VpnProvisionResult;
+
+  if (groupNeedsVpn) {
+    try {
+      vpn = await provisionVpnForGroup();
+    } catch (err) {
+      const errorCode =
+        err instanceof BackendUnavailableError
+          ? ErrorCode.VPN_BACKEND_UNAVAILABLE
+          : ErrorCode.VPN_PROVISIONING_FAILED;
+      return NextResponse.json({ errorCode }, { status: 502 });
+    }
+  } else {
+    vpn = {
+      marzbanUsername: group.marzbanUsername!,
+      subscriptionUrl: group.subscriptionUrl!,
+    };
+  }
+
+  await prisma.$transaction(async (tx) => {
+    if (groupNeedsVpn) {
+      await tx.group.update({
+        where: { id: group.id },
+        data: { marzbanUsername: vpn.marzbanUsername, subscriptionUrl: vpn.subscriptionUrl },
+      });
+    }
+    const created = await tx.user.create({
+      data: {
+        login,
+        passwordHash,
+        status: "ACTIVE",
+        groupId: group.id,
+        marzbanUsername: vpn.marzbanUsername,
+        subscriptionUrl: vpn.subscriptionUrl,
+      },
+    });
+    if (inviteId) {
+      await tx.invite.update({
+        where: { id: inviteId },
+        data: { usedAt: new Date(), usedById: created.id },
+      });
+    }
+  });
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }

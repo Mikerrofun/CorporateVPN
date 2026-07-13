@@ -50,7 +50,6 @@ cp .env.example .env
 
 docker compose up -d --build
 docker compose exec web npx prisma migrate deploy
-docker compose exec web npm run seed   # создаёт единственного ADMIN-а, см. ниже
 ```
 
 Локальная (не-Docker) разработка фронтенда:
@@ -59,21 +58,29 @@ docker compose exec web npm run seed   # создаёт единственног
 cd web
 cp ../.env .env.local        # Next.js сам ищет .env* только внутри web/
 npm install
-npx prisma migrate dev       # создаёт первую миграцию из schema.prisma
-npm run seed                 # бутстрапит ADMIN-а (idempotent)
+npx prisma migrate dev       # применяет миграции из prisma/migrations
 npm run dev
 ```
 
-## Создание первого администратора
+## Администратор
 
-Саморегистрации нет — админ-аккаунт бутстрапится один раз через `npm run seed`
-(`web/prisma/seed.ts`, обёртка над `prisma db seed`). Скрипт идемпотентен: если ADMIN с таким
-email уже есть, ничего не делает.
+Саморегистрации нет и seed-скрипта тоже: admin не хранится в БД, а задаётся в `.env` —
+`ADMIN_LOGIN` + `ADMIN_PASSWORD_HASH` (bcrypt-хэш, например
+`node -e "console.log(require('bcryptjs').hashSync('пароль', 12))"`). Вход — `/admin/login`.
 
-По умолчанию используются `ADMIN_EMAIL`/`ADMIN_COMPANY_NAME` из `.env`, а пароль и код
-корпорации генерируются случайно, если `ADMIN_PASSWORD`/`ADMIN_COMPANY_CODE` не заданы.
-Итоговые email/пароль/код пишутся в `ADMIN_CREDENTIALS.txt` в корне репозитория (в
-`.gitignore`, наружу не уходит) — оттуда и войти на `/login`.
+## VPN: один ключ на группу, индивидуальный контроль
+
+- Marzban-аккаунт создаётся **при регистрации первого сотрудника группы** (не при создании
+  группы). Backend вызывается до записи в БД: если Marzban отказал — регистрация отклоняется
+  (`VPN_PROVISIONING_FAILED` / `VPN_BACKEND_UNAVAILABLE`), в БД ничего не появляется.
+- Все сотрудники группы получают **общий** `subscriptionUrl`; VPN-данные копируются в каждого
+  `User` из `Group`.
+- Индивидуальный контроль — на уровне приложения, без Marzban: бан (`User.status = BANNED`)
+  блокирует вход и активные сессии (redirect на `/suspended`), перенос между группами
+  копирует VPN-данные новой группы (целевая группа должна быть уже provisioned, иначе
+  `NEW_GROUP_NO_VPN`).
+
+Подробности — в `INVITE_CODES_SYSTEM.md`, секция «VPN Provisioning».
 
 ## Известные упрощения / что доделать дальше
 
