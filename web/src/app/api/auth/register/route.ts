@@ -84,67 +84,7 @@ async function registerWithGroupCode(
     return NextResponse.json({ errorCode: ErrorCode.GROUP_FULL }, { status: 409 });
   }
 
-  // ── VPN provisioning ──────────────────────────────────────────────
-  // Первый пользователь группы: создаём Marzban-аккаунт ДО записи в БД.
-  // При ошибке Marzban ничего не создано — User не появляется.
-  // Последующие пользователи: копируем VPN-данные из Group.
-  if (group.marzbanUsername && group.subscriptionUrl) {
-    await prisma.user.create({
-      data: {
-        login,
-        passwordHash,
-        status: "ACTIVE",
-        groupId: group.id,
-        marzbanUsername: group.marzbanUsername,
-        subscriptionUrl: group.subscriptionUrl,
-      },
-    });
-    return NextResponse.json({ ok: true }, { status: 201 });
-  }
-
-  const provisioned = await provisionVpn();
-  if ("errorCode" in provisioned) {
-    return NextResponse.json({ errorCode: provisioned.errorCode }, { status: 502 });
-  }
-
-  // Транзакция: сохраняем VPN-данные в Group и создаём User атомарно.
-  // Если запись User упадёт — обновление Group откатится вместе с ней.
-  await prisma.$transaction([
-    prisma.group.update({
-      where: { id: group.id },
-      data: {
-        marzbanUsername: provisioned.marzbanUsername,
-        subscriptionUrl: provisioned.subscriptionUrl,
-      },
-    }),
-    prisma.user.create({
-      data: {
-        login,
-        passwordHash,
-        status: "ACTIVE",
-        groupId: group.id,
-        marzbanUsername: provisioned.marzbanUsername,
-        subscriptionUrl: provisioned.subscriptionUrl,
-      },
-    }),
-  ]);
-
-  return NextResponse.json({ ok: true }, { status: 201 });
-}
-
-/**
- * Вызывает backend для создания Marzban-аккаунта группы.
- * Возвращает VPN-данные либо код ошибки (backend недоступен / отказал).
- */
-async function provisionVpn(): Promise<VpnProvisionResult | { errorCode: ErrorCode }> {
-  try {
-    return await provisionVpnForGroup();
-  } catch (err) {
-    if (err instanceof BackendUnavailableError) {
-      return { errorCode: ErrorCode.VPN_BACKEND_UNAVAILABLE };
-    }
-    return { errorCode: ErrorCode.VPN_PROVISIONING_FAILED };
-  }
+  return createMember({ group, login, passwordHash });
 }
 
 /** Регистрация по персональному коду: одноразовый инвайт, помечается использованным. */
@@ -173,31 +113,57 @@ async function registerWithInviteCode(
     return NextResponse.json({ errorCode: ErrorCode.GROUP_FULL }, { status: 409 });
   }
 
-  // ── VPN provisioning ──────────────────────────────────────────────
-  // Если у группы ещё нет VPN (пустая группа) — создаём Marzban-аккаунт
-  // ДО транзакции. При ошибке Marzban ничего не записано: User не создан,
-  // Invite остаётся свободным.
-  let vpn: { marzbanUsername: string; subscriptionUrl: string };
-  const groupNeedsVpn = !invite.group.marzbanUsername || !invite.group.subscriptionUrl;
+  return createMember({ group: invite.group, login, passwordHash, inviteId: invite.id });
+}
+
+/**
+ * Единая точка создания сотрудника — общая для GRP- и INV-регистрации.
+ *
+ * VPN provisioning (одинаково для обоих потоков):
+ * - у группы уже есть VPN → копируем данные в нового User;
+ * - группа пустая → создаём Marzban-аккаунт ДО транзакции; при ошибке
+ *   backend ничего не записано (User не создан, Invite остаётся свободным).
+ *
+ * Единственное отличие потоков: при INV-коде инвайт помечается
+ * использованным в той же транзакции (передан inviteId).
+ */
+async function createMember(params: {
+  group: {
+    id: string;
+    marzbanUsername: string | null;
+    subscriptionUrl: string | null;
+  };
+  login: string;
+  passwordHash: string;
+  inviteId?: string;
+}) {
+  const { group, login, passwordHash, inviteId } = params;
+
+  const groupNeedsVpn = !group.marzbanUsername || !group.subscriptionUrl;
+  let vpn: VpnProvisionResult;
 
   if (groupNeedsVpn) {
-    const provisioned = await provisionVpn();
-    if ("errorCode" in provisioned) {
-      return NextResponse.json({ errorCode: provisioned.errorCode }, { status: 502 });
+    try {
+      vpn = await provisionVpnForGroup();
+    } catch (err) {
+      const errorCode =
+        err instanceof BackendUnavailableError
+          ? ErrorCode.VPN_BACKEND_UNAVAILABLE
+          : ErrorCode.VPN_PROVISIONING_FAILED;
+      return NextResponse.json({ errorCode }, { status: 502 });
     }
-    vpn = provisioned;
   } else {
     vpn = {
-      marzbanUsername: invite.group.marzbanUsername!,
-      subscriptionUrl: invite.group.subscriptionUrl!,
+      marzbanUsername: group.marzbanUsername!,
+      subscriptionUrl: group.subscriptionUrl!,
     };
   }
 
-  // Транзакция: (Group при первом User) + User + пометка Invite — атомарно.
+  // Транзакция: (Group при первом User) + User (+ пометка Invite) — атомарно.
   await prisma.$transaction(async (tx) => {
     if (groupNeedsVpn) {
       await tx.group.update({
-        where: { id: invite.groupId },
+        where: { id: group.id },
         data: { marzbanUsername: vpn.marzbanUsername, subscriptionUrl: vpn.subscriptionUrl },
       });
     }
@@ -206,15 +172,17 @@ async function registerWithInviteCode(
         login,
         passwordHash,
         status: "ACTIVE",
-        groupId: invite.groupId,
+        groupId: group.id,
         marzbanUsername: vpn.marzbanUsername,
         subscriptionUrl: vpn.subscriptionUrl,
       },
     });
-    await tx.invite.update({
-      where: { id: invite.id },
-      data: { usedAt: new Date(), usedById: created.id },
-    });
+    if (inviteId) {
+      await tx.invite.update({
+        where: { id: inviteId },
+        data: { usedAt: new Date(), usedById: created.id },
+      });
+    }
   });
 
   return NextResponse.json({ ok: true }, { status: 201 });
