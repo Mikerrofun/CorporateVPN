@@ -120,18 +120,19 @@ model Invite {
 
 ## VPN Provisioning
 
-Модель: **один Marzban-аккаунт на группу**. Все сотрудники группы используют общий
-`subscriptionUrl`; VPN-данные копируются в каждого `User` для быстрого доступа из кабинета.
+Модель: **индивидуальный Marzban-аккаунт на каждого сотрудника** (1 User = 1 аккаунт =
+1 персональный `subscriptionUrl`). Группа — логическое объединение: лимиты, инвайты,
+массовые действия. VPN-полей на Group нет.
 
 ```
-Group (БД)
+Group (БД) — только организация
 ├─ groupCode: "GRP-X7F9K2H3"
-├─ marzbanUsername: "corp_..." (создаётся при регистрации ПЕРВОГО сотрудника)
-└─ subscriptionUrl: "https://..." (общий для всех User группы)
+├─ maxMembers, status
+└─ members: User[]
 
-User (БД)
-├─ marzbanUsername ← копия из Group (НЕ unique)
-└─ subscriptionUrl ← копия из Group
+User (БД) — VPN здесь
+├─ marzbanUsername: "user_..." (@unique, создаётся при регистрации)
+└─ subscriptionUrl: "https://..." (персональный)
 ```
 
 ### Поток при регистрации
@@ -139,40 +140,54 @@ User (БД)
 ```
 registerWithGroupCode() / registerWithInviteCode()
   ↓
-Group.marzbanUsername заполнен?
-  ├─ ДА  → создать User с копией VPN-данных из Group
-  └─ НЕТ → provisionVpnForGroup()  (backend POST /provisioning/create)
-            ├─ ошибка → регистрация отклонена (502), ничего не записано,
-            │           Invite остаётся свободным
-            └─ успех  → транзакция: Group.update(VPN) + User.create(VPN)
-                        (+ Invite.update при INV-коде)
+createMember()  — единая точка для обоих типов кодов
+  ↓
+provisionVpnForUser()  (backend POST /provisioning/create)
+  ├─ ошибка → регистрация отклонена (502), ничего не записано,
+  │           Invite остаётся свободным
+  └─ успех  → транзакция: User.create(VPN) (+ Invite.update при INV-коде)
 ```
 
 Ключевой момент: Marzban-аккаунт создаётся **до** транзакции БД. Если Marzban отказал —
 в БД ничего не пишется. Если транзакция БД упала — останется «висячий» аккаунт в Marzban,
-но состояние приложения консистентно (группа не provisioned, повторная попытка создаст новый).
+но состояние приложения консистентно.
 
 ### Клиент backend
 
-`web/src/5shared/api/backend-client.ts` → `provisionVpnForGroup()`:
-- `POST ${BACKEND_URL}/provisioning/create` с заголовком `X-Internal-Secret`
-- Таймаут 15 сек (`AbortSignal.timeout`)
+`web/src/5shared/api/backend-client.ts`:
+- `provisionVpnForUser()` — `POST /provisioning/create`, персональный аккаунт
+- `setVpnStatus(username, "active" | "disabled")` — включение/отключение аккаунта
+- Заголовок `X-Internal-Secret`, таймаут 15 сек (`AbortSignal.timeout`)
 - `BackendError` — backend/Marzban ответил ошибкой → `VPN_PROVISIONING_FAILED`
 - `BackendUnavailableError` — сеть/таймаут → `VPN_BACKEND_UNAVAILABLE`
+- `VPN_PROVISION_MODE=mock` в `.env` — дев-режим: фейковые данные, управляющие
+  вызовы (setVpnStatus и т.п.) — no-op, Marzban не нужен
+
+### Блокировка сотрудника (индивидуальная, мгновенная)
+
+`userAction(userId, { action: "ban" })`:
+1. `setVpnStatus(user.marzbanUsername, "disabled")` — VPN отключается в Marzban
+   **немедленно**, даже если ссылка уже в клиенте сотрудника.
+   Если Marzban недоступен — бан не проходит (`VPN_BACKEND_UNAVAILABLE`)
+2. `User.status = BANNED` в БД
+3. Вход блокируется в `authorize()`; активные сессии перехватываются
+   в `requireEmployeeSession()` → redirect на `/suspended`
+
+`unban` — зеркально (`"active"` + `ACTIVE`). `delete` — best-effort отключение VPN,
+затем удаление User.
 
 ### Смена группы (admin)
 
-`userAction(userId, { action: "move", groupId })`:
-- Целевая группа должна быть уже provisioned, иначе `NEW_GROUP_NO_VPN`
-- При переносе `marzbanUsername`/`subscriptionUrl` копируются из новой группы
+`userAction(userId, { action: "move", groupId })` — VPN-аккаунт индивидуальный
+и переезжает вместе с сотрудником: меняется только `groupId`, ключ не трогаем.
 
-### Блокировка сотрудника
+### Групповые действия (admin)
 
-`userAction(userId, { action: "ban" })` → `User.status = BANNED` (только БД, Marzban не трогаем):
-- Вход блокируется в `authorize()` (NextAuth)
-- Активные сессии перехватываются в `requireEmployeeSession()` (живая проверка статуса
-  в БД) → redirect на `/suspended`
-- Общая ссылка группы при этом не меняется
+`groupAction(groupId, { action })` — применяются ко ВСЕМ участникам группы:
+- `suspend` / `resume` — `setVpnStatus` каждому участнику (кроме лично BANNED —
+  их статус сохраняется), затем `Group.status`
+- `rotate` — `rotateKey` каждому участнику, каждый получает новый персональный URL
+- `delete` — best-effort отключение VPN всех участников, каскадное удаление группы
 
 ### Error codes
 
@@ -180,4 +195,3 @@ Group.marzbanUsername заполнен?
 | --- | --- |
 | `VPN_PROVISIONING_FAILED` | Marzban/backend ответил ошибкой (например 502) |
 | `VPN_BACKEND_UNAVAILABLE` | Backend недоступен: сеть, DNS, таймаут |
-| `NEW_GROUP_NO_VPN` | Перенос в группу, у которой ещё нет VPN-аккаунта |

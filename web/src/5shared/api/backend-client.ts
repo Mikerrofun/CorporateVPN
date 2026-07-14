@@ -76,7 +76,7 @@ export const backend = {
   },
 };
 
-/** Результат VPN-провизионинга группы. */
+/** Результат VPN-провизионинга сотрудника. */
 export type VpnProvisionResult = {
   marzbanUsername: string;
   subscriptionUrl: string;
@@ -89,17 +89,20 @@ export type VpnProvisionResult = {
  */
 const VPN_PROVISION_MODE = process.env.VPN_PROVISION_MODE ?? "real";
 
+/** true в дев-режиме без Marzban — управляющие вызовы (setStatus и т.п.) пропускаются. */
+export const isVpnMockMode = VPN_PROVISION_MODE === "mock";
+
 function mockProvision(): VpnProvisionResult {
   const id = crypto.randomUUID().slice(0, 8);
   return {
-    marzbanUsername: `mock_corp_${id}`,
+    marzbanUsername: `mock_user_${id}`,
     subscriptionUrl: `https://mock.vpn.local/sub/${id}`,
   };
 }
 
 /**
- * Создаёт Marzban-аккаунт для группы (один общий аккаунт на всю группу).
- * Вызывается при регистрации ПЕРВОГО пользователя группы.
+ * Создаёт индивидуальный Marzban-аккаунт для сотрудника.
+ * Вызывается при регистрации КАЖДОГО пользователя (1 сотрудник = 1 аккаунт).
  *
  * При VPN_PROVISION_MODE=mock возвращает фейковые данные без запроса
  * к backend — для локальной разработки без Marzban.
@@ -107,8 +110,8 @@ function mockProvision(): VpnProvisionResult {
  * @throws BackendError — Marzban/backend ответил ошибкой (например 502)
  * @throws BackendUnavailableError — backend недоступен (сеть/таймаут)
  */
-export async function provisionVpnForGroup(): Promise<VpnProvisionResult> {
-  if (VPN_PROVISION_MODE === "mock") {
+export async function provisionVpnForUser(): Promise<VpnProvisionResult> {
+  if (isVpnMockMode) {
     return mockProvision();
   }
   const res = await backend.createVpnUser();
@@ -116,6 +119,18 @@ export async function provisionVpnForGroup(): Promise<VpnProvisionResult> {
     marzbanUsername: res.username,
     subscriptionUrl: res.subscription_url,
   };
+}
+
+/**
+ * Меняет статус Marzban-аккаунта (бан/разбан сотрудника, suspend группы).
+ * Best-effort семантику решает вызывающий. В mock-режиме — no-op.
+ */
+export async function setVpnStatus(
+  marzbanUsername: string | null,
+  status: "active" | "disabled",
+): Promise<void> {
+  if (isVpnMockMode || !marzbanUsername) return;
+  await backend.setStatus(marzbanUsername, status);
 }
 
 export { BackendError, BackendUnavailableError };

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { backend, BackendError } from "@/5shared/api/backend-client";
+import { backend, BackendError, isVpnMockMode, setVpnStatus } from "@/5shared/api/backend-client";
 import { prisma } from "@/5shared/api/prisma";
 import { requireAdminSession } from "@/5shared/session/guards";
 import { ErrorCode } from "@/5shared/lib/errors";
@@ -19,11 +19,15 @@ export async function groupAction(
   const parsed = groupActionSchema.safeParse(input);
   if (!parsed.success) return { ok: false, errorCode: ErrorCode.VALIDATION_ERROR };
 
-  const group = await prisma.group.findUnique({ where: { id: groupId } });
+  // VPN-аккаунты индивидуальные — групповые действия применяются
+  // ко всем участникам группы (кроме уже забаненных лично).
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    include: {
+      members: { select: { id: true, status: true, marzbanUsername: true } },
+    },
+  });
   if (!group) return { ok: false, errorCode: ErrorCode.GROUP_NOT_FOUND };
-  if (!group.marzbanUsername) {
-    return { ok: false, errorCode: ErrorCode.VPN_NOT_PROVISIONED };
-  }
 
   const audit = (action: string, details?: string) =>
     prisma.adminAuditLog
@@ -36,29 +40,46 @@ export async function groupAction(
       })
       .catch(() => null);
 
+  /** Меняет статус Marzban-аккаунтов всех участников (кроме BANNED — у них свой статус). */
+  const setMembersVpnStatus = async (status: "active" | "disabled") => {
+    const targets = group.members.filter((m) => m.marzbanUsername && m.status !== "BANNED");
+    await Promise.all(targets.map((m) => setVpnStatus(m.marzbanUsername, status)));
+  };
+
   try {
     switch (parsed.data.action) {
       case "suspend": {
-        await backend.setStatus(group.marzbanUsername, "disabled");
+        await setMembersVpnStatus("disabled");
         await prisma.group.update({ where: { id: group.id }, data: { status: "SUSPENDED" } });
         await audit("group_suspend");
         break;
       }
       case "resume": {
-        await backend.setStatus(group.marzbanUsername, "active");
+        await setMembersVpnStatus("active");
         await prisma.group.update({ where: { id: group.id }, data: { status: "ACTIVE" } });
         await audit("group_resume");
         break;
       }
       case "rotate": {
-        const { subscription_url } = await backend.rotateKey(group.marzbanUsername);
-        await prisma.group.update({ where: { id: group.id }, data: { subscriptionUrl: subscription_url } });
-        await audit("group_rotate");
-        revalidatePath("/admin");
-        return { ok: true, data: { subscriptionUrl: subscription_url } };
+        // Ротация индивидуальная: каждому участнику — новый subscription URL.
+        if (!isVpnMockMode) {
+          for (const m of group.members) {
+            if (!m.marzbanUsername) continue;
+            const { subscription_url } = await backend.rotateKey(m.marzbanUsername);
+            await prisma.user.update({
+              where: { id: m.id },
+              data: { subscriptionUrl: subscription_url },
+            });
+          }
+        }
+        await audit("group_rotate", `group=${group.name} members=${group.members.length}`);
+        break;
       }
       case "delete": {
-        await backend.setStatus(group.marzbanUsername, "disabled").catch(() => null);
+        // Best-effort отключение VPN всех участников, затем каскадное удаление.
+        await Promise.all(
+          group.members.map((m) => setVpnStatus(m.marzbanUsername, "disabled").catch(() => null)),
+        );
         await prisma.group.delete({ where: { id: group.id } });
         await audit("group_delete");
         break;

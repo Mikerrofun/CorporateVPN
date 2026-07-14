@@ -40,8 +40,8 @@ enum TicketStatus {
 
 // ─── Models ───────────────────────────────────────────────────────────────────
 
-/// Группа сотрудников. У каждой группы свой Marzban аккаунт и ссылка подписки.
-/// Admin создаёт группу и задаёт maxMembers.
+/// Группа сотрудников — логическое объединение (лимиты, инвайты, массовые действия).
+/// VPN-аккаунты индивидуальные и хранятся на User, не на группе.
 model Group {
   id         String      @id @default(cuid())
   name       String
@@ -50,11 +50,6 @@ model Group {
   /// Максимальное количество участников — задаёт admin при создании.
   maxMembers Int
   status     GroupStatus @default(ACTIVE)
-
-  /// Marzban аккаунт группы (один на всю группу).
-  marzbanUsername String? @unique
-  /// Ссылка подписки Hiddify/Outline — одна на всю группу.
-  subscriptionUrl String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -94,9 +89,9 @@ model User {
   passwordHash String
   status       UserStatus @default(ACTIVE)
 
-  /// Marzban-аккаунт группы, скопированный на сотрудника (общий на всю группу — НЕ unique).
-  marzbanUsername String?
-  /// Ссылка подписки, скопированная из группы (общая на всю группу).
+  /// Индивидуальный Marzban-аккаунт сотрудника (создаётся при регистрации).
+  marzbanUsername String? @unique
+  /// Персональная ссылка подписки сотрудника.
   subscriptionUrl String?
 
   groupId String
