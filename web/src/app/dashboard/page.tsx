@@ -40,11 +40,11 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* TODO: ConnectPanel с subscriptionUrl из group */}
-      {user.group.subscriptionUrl ? (
+      {/* Персональная подписка сотрудника (индивидуальный Marzban-аккаунт) */}
+      {user.subscriptionUrl ? (
         <div className="card border border-white/[0.04]">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Ссылка подписки</p>
-          <p className="font-mono text-sm text-slate-300 break-all">{user.group.subscriptionUrl}</p>
+          <p className="font-mono text-sm text-slate-300 break-all">{user.subscriptionUrl}</p>
         </div>
       ) : (
         <div className="card border border-dashed border-white/[0.08]">

@@ -27,7 +27,6 @@ export enum ErrorCode {
   NO_AVAILABLE_SLOTS = "NO_AVAILABLE_SLOTS",
   VPN_PROVISIONING_FAILED = "VPN_PROVISIONING_FAILED",
   VPN_BACKEND_UNAVAILABLE = "VPN_BACKEND_UNAVAILABLE",
-  NEW_GROUP_NO_VPN = "NEW_GROUP_NO_VPN",
 
   // ── User operations ───────────────────────────────────────────────
   USER_NOT_FOUND = "USER_NOT_FOUND",

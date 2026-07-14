@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import {
   BackendUnavailableError,
-  provisionVpnForGroup,
+  provisionVpnForUser,
   type VpnProvisionResult,
 } from "@/5shared/api/backend-client";
 import { prisma } from "@/5shared/api/prisma";
@@ -121,53 +121,34 @@ async function registerWithInviteCode(
 /**
  * Единая точка создания сотрудника — общая для GRP- и INV-регистрации.
  *
- * VPN provisioning (одинаково для обоих потоков):
- * - у группы уже есть VPN → копируем данные в нового User;
- * - группа пустая → создаём Marzban-аккаунт ДО транзакции; при ошибке
- *   backend ничего не записано (User не создан, Invite остаётся свободным).
+ * VPN provisioning: КАЖДЫЙ сотрудник получает свой Marzban-аккаунт.
+ * Аккаунт создаётся ДО транзакции: при ошибке backend ничего не записано
+ * (User не создан, Invite остаётся свободным).
  *
  * Единственное отличие потоков: при INV-коде инвайт помечается
  * использованным в той же транзакции (передан inviteId).
  */
 async function createMember(params: {
-  group: {
-    id: string;
-    marzbanUsername: string | null;
-    subscriptionUrl: string | null;
-  };
+  group: { id: string };
   login: string;
   passwordHash: string;
   inviteId?: string;
 }) {
   const { group, login, passwordHash, inviteId } = params;
 
-  const groupNeedsVpn = !group.marzbanUsername || !group.subscriptionUrl;
   let vpn: VpnProvisionResult;
-
-  if (groupNeedsVpn) {
-    try {
-      vpn = await provisionVpnForGroup();
-    } catch (err) {
-      const errorCode =
-        err instanceof BackendUnavailableError
-          ? ErrorCode.VPN_BACKEND_UNAVAILABLE
-          : ErrorCode.VPN_PROVISIONING_FAILED;
-      return NextResponse.json({ errorCode }, { status: 502 });
-    }
-  } else {
-    vpn = {
-      marzbanUsername: group.marzbanUsername!,
-      subscriptionUrl: group.subscriptionUrl!,
-    };
+  try {
+    vpn = await provisionVpnForUser();
+  } catch (err) {
+    const errorCode =
+      err instanceof BackendUnavailableError
+        ? ErrorCode.VPN_BACKEND_UNAVAILABLE
+        : ErrorCode.VPN_PROVISIONING_FAILED;
+    return NextResponse.json({ errorCode }, { status: 502 });
   }
 
+  // Транзакция: User (+ пометка Invite) — атомарно.
   await prisma.$transaction(async (tx) => {
-    if (groupNeedsVpn) {
-      await tx.group.update({
-        where: { id: group.id },
-        data: { marzbanUsername: vpn.marzbanUsername, subscriptionUrl: vpn.subscriptionUrl },
-      });
-    }
     const created = await tx.user.create({
       data: {
         login,

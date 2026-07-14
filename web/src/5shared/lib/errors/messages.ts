@@ -23,7 +23,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.GROUP_SUSPENDED]: "Группа приостановлена",
   [ErrorCode.GROUP_FULL]: "Группа заполнена",
   [ErrorCode.INVALID_INVITE_CODE]: "Инвайт-код недействителен",
-  [ErrorCode.VPN_NOT_PROVISIONED]: "VPN-аккаунт ещё не выдан для этой группы",
+  [ErrorCode.VPN_NOT_PROVISIONED]: "VPN-аккаунт ещё не выдан",
 
   // ── Invite operations ─────────────────────────────────────────────
   [ErrorCode.INVITE_NOT_FOUND]: "Инвайт-код не найден",
@@ -31,7 +31,6 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.NO_AVAILABLE_SLOTS]: "Нет свободных мест в группе",
   [ErrorCode.VPN_PROVISIONING_FAILED]: "Не удалось создать VPN-аккаунт. Попробуйте позже.",
   [ErrorCode.VPN_BACKEND_UNAVAILABLE]: "VPN-сервис временно недоступен. Попробуйте позже.",
-  [ErrorCode.NEW_GROUP_NO_VPN]: "У новой группы ещё нет VPN-аккаунта",
 
   // ── User operations ───────────────────────────────────────────────
   [ErrorCode.USER_NOT_FOUND]: "Сотрудник не найден",

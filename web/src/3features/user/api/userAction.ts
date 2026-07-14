@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { setVpnStatus } from "@/5shared/api/backend-client";
 import { prisma } from "@/5shared/api/prisma";
 import { requireAdminSession } from "@/5shared/session/guards";
 import { ErrorCode } from "@/5shared/lib/errors";
@@ -32,16 +33,31 @@ export async function userAction(userId: string, input: UserAction): Promise<Act
 
   switch (parsed.data.action) {
     case "ban": {
+      // Сначала отключаем VPN в Marzban (индивидуальный аккаунт), потом БД.
+      // Если Marzban недоступен — бан не проходит: иначе сотрудник без
+      // кабинета, но с работающим VPN.
+      try {
+        await setVpnStatus(user.marzbanUsername, "disabled");
+      } catch {
+        return { ok: false, errorCode: ErrorCode.VPN_BACKEND_UNAVAILABLE };
+      }
       await prisma.user.update({ where: { id: user.id }, data: { status: "BANNED" } });
       await audit("user_ban");
       break;
     }
     case "unban": {
+      try {
+        await setVpnStatus(user.marzbanUsername, "active");
+      } catch {
+        return { ok: false, errorCode: ErrorCode.VPN_BACKEND_UNAVAILABLE };
+      }
       await prisma.user.update({ where: { id: user.id }, data: { status: "ACTIVE" } });
       await audit("user_unban");
       break;
     }
     case "delete": {
+      // Best-effort: отключаем VPN-аккаунт, но удаление не блокируем.
+      await setVpnStatus(user.marzbanUsername, "disabled").catch(() => null);
       await prisma.user.delete({ where: { id: user.id } });
       await audit("user_delete");
       break;
@@ -55,18 +71,11 @@ export async function userAction(userId: string, input: UserAction): Promise<Act
       if (targetGroup._count.members >= targetGroup.maxMembers) {
         return { ok: false, errorCode: ErrorCode.GROUP_FULL };
       }
-      // Целевая группа должна быть уже provisioned — иначе сотруднику
-      // нечего скопировать (VPN-доступ пропадёт).
-      if (!targetGroup.marzbanUsername || !targetGroup.subscriptionUrl) {
-        return { ok: false, errorCode: ErrorCode.NEW_GROUP_NO_VPN };
-      }
+      // VPN-аккаунт индивидуальный и переезжает вместе с сотрудником —
+      // менять ничего не нужно, только групповую принадлежность.
       await prisma.user.update({
         where: { id: user.id },
-        data: {
-          groupId: parsed.data.groupId,
-          marzbanUsername: targetGroup.marzbanUsername,
-          subscriptionUrl: targetGroup.subscriptionUrl,
-        },
+        data: { groupId: parsed.data.groupId },
       });
       await audit("user_move", `from=${user.groupId} to=${parsed.data.groupId}`);
       break;
