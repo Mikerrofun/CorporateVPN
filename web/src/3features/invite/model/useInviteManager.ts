@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { getErrorMessage } from "@/5shared/lib/errors";
-import { createInvite, getInvites, type InviteInfo } from "../api";
+import { createInvite, deleteInvite, getInvites, type InviteInfo } from "../api";
 
 export function useInviteManager(groupId: string) {
   const [invites, setInvites] = useState<InviteInfo[]>([]);
@@ -11,7 +11,9 @@ export function useInviteManager(groupId: string) {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
 
   async function loadInvites() {
     setIsLoading(true);
@@ -57,6 +59,21 @@ export function useInviteManager(groupId: string) {
     await navigator.clipboard.writeText(code).catch(() => null);
   }
 
+  async function handleDelete(inviteId: string) {
+    setError(null);
+    setDeletingId(inviteId);
+    try {
+      const result = await deleteInvite(inviteId);
+      if (!result.ok) {
+        setError(getErrorMessage(result.errorCode));
+        return;
+      }
+      await loadInvites();
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return {
     invites,
     isOpen,
@@ -64,8 +81,11 @@ export function useInviteManager(groupId: string) {
     hasLoaded,
     isLoading,
     isGenerating,
+    deletingId,
     error,
     handleGenerate,
     handleCopy,
+    handleDelete,
   };
+
 }

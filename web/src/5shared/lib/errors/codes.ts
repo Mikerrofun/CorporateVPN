@@ -9,6 +9,9 @@ export enum ErrorCode {
   FORBIDDEN = "FORBIDDEN",
   INVALID_CREDENTIALS = "INVALID_CREDENTIALS",
   RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED",
+  ACCOUNT_DELETED = "ACCOUNT_DELETED",
+  USER_BANNED = "USER_BANNED",
+
 
   // ── General ───────────────────────────────────────────────────────
   SOMETHING_WRONG = "SOMETHING_WRONG",

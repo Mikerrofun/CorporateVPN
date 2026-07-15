@@ -1,14 +1,17 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { usePasswordVisibility } from "@/5shared/lib/hooks";
-import { getErrorMessage } from "@/5shared/lib/errors";
+import { ErrorCode, getErrorMessage } from "@/5shared/lib/errors";
 import { userLoginSchema, UserLoginFormValues } from "./userLoginSchema";
 
 export function useUserLogin() {
   const [serverError, setServerError] = useState<string | null>(null);
   const passwordVisibility = usePasswordVisibility();
+  const router = useRouter();
+
 
   const form = useForm<UserLoginFormValues>({
     resolver: zodResolver(userLoginSchema),
@@ -27,9 +30,15 @@ export function useUserLogin() {
     });
 
     if (res?.error) {
+      // Удалённый инвайт-код: сотрудника больше нет — отправляем на регистрацию.
+      if (res.error === ErrorCode.ACCOUNT_DELETED) {
+        router.push("/register");
+        return;
+      }
       setServerError(getErrorMessage(res.error, "Неверный логин или пароль"));
       return;
     }
+
 
     // Редирект обрабатывается через Redirector
   }

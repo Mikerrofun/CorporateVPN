@@ -34,8 +34,6 @@ export async function userAction(userId: string, input: UserAction): Promise<Act
   switch (parsed.data.action) {
     case "ban": {
       // Сначала отключаем VPN в Marzban (индивидуальный аккаунт), потом БД.
-      // Если Marzban недоступен — бан не проходит: иначе сотрудник без
-      // кабинета, но с работающим VPN.
       try {
         await setVpnStatus(user.marzbanUsername, "disabled");
       } catch {
@@ -56,12 +54,14 @@ export async function userAction(userId: string, input: UserAction): Promise<Act
       break;
     }
     case "delete": {
-      // Best-effort: отключаем VPN-аккаунт, но удаление не блокируем.
+      // Soft-delete: VPN отключаем best-effort, юзер помечается DELETED
+      // (строка живёт в БД для спец-ошибки на входе, аккаунт Marzban не удаляем).
       await setVpnStatus(user.marzbanUsername, "disabled").catch(() => null);
-      await prisma.user.delete({ where: { id: user.id } });
+      await prisma.user.update({ where: { id: user.id }, data: { status: "DELETED" } });
       await audit("user_delete");
       break;
     }
+
     case "move": {
       const targetGroup = await prisma.group.findUnique({
         where: { id: parsed.data.groupId },

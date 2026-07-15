@@ -1,6 +1,8 @@
 "use client";
 
+import { ConfirmDialog } from "@/5shared/ui";
 import { useInviteManager } from "../../model/useInviteManager";
+
 
 type InviteManagerProps = {
   groupId: string;
@@ -26,10 +28,13 @@ export function InviteManager({ groupId, maxMembers }: InviteManagerProps) {
     hasLoaded,
     isLoading,
     isGenerating,
+    deletingId,
     error,
     handleGenerate,
     handleCopy,
+    handleDelete,
   } = useInviteManager(groupId);
+
 
   return (
     <div className="space-y-3 border-t border-white/[0.04] pt-4">
@@ -99,7 +104,30 @@ export function InviteManager({ groupId, maxMembers }: InviteManagerProps) {
                     <td className="py-2 font-mono text-xs text-slate-300">
                       {invite.usedBy?.login ?? "—"}
                     </td>
+                    <td className="py-2 text-right">
+                      <ConfirmDialog
+                        trigger={
+                          <button
+                            type="button"
+                            title="Удалить"
+                            disabled={deletingId === invite.id}
+                            className="rounded-md px-2 py-1 text-sm text-slate-500 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-50"
+                          >
+                            🗑
+                          </button>
+                        }
+                        title={invite.usedAt ? "Удалить код и сотрудника" : "Удалить код"}
+                        description={
+                          invite.usedAt
+                            ? "Сотрудник потеряет доступ к VPN, а код будет удалён."
+                            : "Код будет удалён."
+                        }
+                        confirmLabel="Удалить"
+                        onConfirm={() => handleDelete(invite.id)}
+                      />
+                    </td>
                   </tr>
+
                 ))}
               </tbody>
             </table>

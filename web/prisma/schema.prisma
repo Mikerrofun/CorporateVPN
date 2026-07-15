@@ -19,7 +19,9 @@ datasource db {
 enum UserStatus {
   ACTIVE
   BANNED
+  DELETED
 }
+
 
 enum GroupStatus {
   ACTIVE
