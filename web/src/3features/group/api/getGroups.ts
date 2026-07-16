@@ -10,10 +10,23 @@ export async function getGroups(): Promise<GroupWithMembers[]> {
     orderBy: { createdAt: "desc" },
     include: {
       members: {
+        where: { status: { not: "DELETED" } },
         select: { id: true, login: true, status: true },
         orderBy: { createdAt: "asc" },
       },
-      _count: { select: { members: true } },
+      invites: {
+        select: {
+          id: true,
+          code: true,
+          createdAt: true,
+          usedAt: true,
+          usedBy: {
+            select: { id: true, login: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+      _count: { select: { members: { where: { status: { not: "DELETED" } } } } },
     },
   });
 }

@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
 
+import { prisma } from "@/5shared/api/prisma";
+import { authOptions } from "@/5shared/session/auth";
 import { SignOutButton } from "@/5shared/ui/SignOutButton";
 
 export const metadata: Metadata = {
@@ -10,8 +14,23 @@ export const metadata: Metadata = {
  * Страница для заблокированных сотрудников (User.status = BANNED)
  * или сотрудников приостановленной группы (Group.status = SUSPENDED).
  * Сюда редиректит requireEmployeeSession().
+ *
+ * Reverse-guard на сервере: здоровый сотрудник, попавший сюда (мигание после
+ * разбана или ручной ввод URL), уходит на /dashboard; мертвец — на /login.
+ * Проверка на сервере, а не в middleware: там доступен только JWT без status.
  */
-export default function SuspendedPage() {
+export default async function SuspendedPage() {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.isAdmin) redirect("/admin");
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { status: true, group: { select: { status: true } } },
+  });
+  if (!user || user.status === "DELETED") redirect("/login");
+  if (user.status === "ACTIVE" && user.group.status === "ACTIVE") redirect("/dashboard");
+
+
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-md rounded-2xl border border-white/[0.05] bg-white/[0.02] p-8 text-center">

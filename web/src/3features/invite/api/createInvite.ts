@@ -16,19 +16,21 @@ export async function createInvite(groupId: string): Promise<CreateInviteResult>
   const session = await requireAdminSession();
   if (!session) return { ok: false, errorCode: ErrorCode.UNAUTHORIZED };
 
-  const group = await prisma.group.findUnique({
-    where: { id: groupId },
-    include: { _count: { select: { members: true } } },
-  });
+  const group = await prisma.group.findUnique({ where: { id: groupId } });
 
   if (!group) return { ok: false, errorCode: ErrorCode.GROUP_NOT_FOUND };
 
+  // Живые участники: DELETED не занимает слот.
+  const memberCount = await prisma.user.count({
+    where: { groupId, status: { not: "DELETED" } },
+  });
   const unusedInvites = await prisma.invite.count({
     where: { groupId, usedAt: null },
   });
 
   // Свободные места = maxMembers - (участники + неиспользованные инвайты)
-  const occupied = group._count.members + unusedInvites;
+  const occupied = memberCount + unusedInvites;
+
   if (occupied >= group.maxMembers) {
     return { ok: false, errorCode: ErrorCode.NO_AVAILABLE_SLOTS };
   }

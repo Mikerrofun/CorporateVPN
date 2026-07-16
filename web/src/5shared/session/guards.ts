@@ -29,9 +29,12 @@ export async function requireEmployeeSession() {
     select: { status: true, group: { select: { status: true } } },
   });
   if (!user) return null;
+  // Мертвец: инвайт удалён админом — сессия невалидна, на вход.
+  if (user.status === "DELETED") redirect("/login");
   if (user.status === "BANNED" || user.group.status === "SUSPENDED") {
     redirect("/suspended");
   }
+
 
   // groupId гарантированно string после проверки выше
   return session as typeof session & { user: { groupId: string } };

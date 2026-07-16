@@ -1,6 +1,8 @@
 import { getGroups } from "@/3features/group/api/getGroups";
-import { CreateGroupForm } from "@/3features/group";
+import { CreateGroupForm, GroupActions } from "@/3features/group";
 import { InviteManager } from "@/3features/invite";
+import { MembersTable } from "@/3features/user/ui/MembersTable/MembersTable";
+
 
 
 export default async function AdminPage() {
@@ -48,35 +50,14 @@ export default async function AdminPage() {
                   </span>
                 )}
               </div>
-              {/* TODO: GroupActions компонент */}
-              <div className="text-xs text-slate-500">Действия — в разработке</div>
+              <GroupActions groupId={group.id} status={group.status} />
             </div>
 
             {/* Members */}
-            {group.members.length > 0 && (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs uppercase tracking-wider text-slate-500">
-                    <th className="pb-2">Логин</th>
-                    <th className="pb-2">Статус</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.03]">
-                  {group.members.map((u) => (
-                    <tr key={u.id}>
-                      <td className="py-2 font-mono text-slate-300">{u.login}</td>
-                      <td className="py-2">
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${u.status === "ACTIVE" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
-                          {u.status === "ACTIVE" ? "Активен" : "Заблокирован"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+            <MembersTable members={group.members} />
 
-            <InviteManager groupId={group.id} maxMembers={group.maxMembers} />
+            <InviteManager groupId={group.id} maxMembers={group.maxMembers} invites={group.invites} />
+
           </div>
         ))}
         {groups.length === 0 && (

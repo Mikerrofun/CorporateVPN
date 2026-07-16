@@ -46,19 +46,22 @@ export async function POST(req: Request) {
   }
 
   const existing = await prisma.user.findUnique({ where: { login: normalizedLogin } });
-  if (existing) {
+  if (existing && existing.status !== "DELETED") {
     return NextResponse.json({ errorCode: ErrorCode.LOGIN_ALREADY_EXISTS }, { status: 409 });
   }
+  // DELETED-строка освобождается: удалим её в транзакции создания нового юзера.
+  const existingDeletedId = existing?.status === "DELETED" ? existing.id : undefined;
 
   const passwordHash = await bcrypt.hash(password, 12);
 
   // ── Тип кода определяется по префиксу ────────────────────────────────
   if (normalizedCode.startsWith("GRP-")) {
-    return registerWithGroupCode(normalizedCode, normalizedLogin, passwordHash);
+    return registerWithGroupCode(normalizedCode, normalizedLogin, passwordHash, existingDeletedId);
   }
   if (normalizedCode.startsWith("INV-")) {
-    return registerWithInviteCode(normalizedCode, normalizedLogin, passwordHash);
+    return registerWithInviteCode(normalizedCode, normalizedLogin, passwordHash, existingDeletedId);
   }
+
 
   return NextResponse.json({ errorCode: ErrorCode.INVALID_INVITE_CODE }, { status: 400 });
 }
@@ -68,10 +71,13 @@ async function registerWithGroupCode(
   groupCode: string,
   login: string,
   passwordHash: string,
+  existingDeletedId?: string,
 ) {
   const group = await prisma.group.findUnique({
     where: { groupCode },
-    include: { _count: { select: { members: true } } },
+    include: {
+      _count: { select: { members: { where: { status: { not: "DELETED" } } } } },
+    },
   });
 
   if (!group) {
@@ -84,14 +90,16 @@ async function registerWithGroupCode(
     return NextResponse.json({ errorCode: ErrorCode.GROUP_FULL }, { status: 409 });
   }
 
-  return createMember({ group, login, passwordHash });
+  return createMember({ group, login, passwordHash, existingDeletedId });
 }
+
 
 /** Регистрация по персональному коду: одноразовый инвайт, помечается использованным. */
 async function registerWithInviteCode(
   code: string,
   login: string,
   passwordHash: string,
+  existingDeletedId?: string,
 ) {
   const invite = await prisma.invite.findUnique({
     where: { code },
@@ -108,13 +116,22 @@ async function registerWithInviteCode(
     return NextResponse.json({ errorCode: ErrorCode.GROUP_SUSPENDED }, { status: 403 });
   }
 
-  const memberCount = await prisma.user.count({ where: { groupId: invite.groupId } });
+  const memberCount = await prisma.user.count({
+    where: { groupId: invite.groupId, status: { not: "DELETED" } },
+  });
   if (memberCount >= invite.group.maxMembers) {
     return NextResponse.json({ errorCode: ErrorCode.GROUP_FULL }, { status: 409 });
   }
 
-  return createMember({ group: invite.group, login, passwordHash, inviteId: invite.id });
+  return createMember({
+    group: invite.group,
+    login,
+    passwordHash,
+    inviteId: invite.id,
+    existingDeletedId,
+  });
 }
+
 
 
 
@@ -133,8 +150,10 @@ async function createMember(params: {
   login: string;
   passwordHash: string;
   inviteId?: string;
+  existingDeletedId?: string;
 }) {
-  const { group, login, passwordHash, inviteId } = params;
+  const { group, login, passwordHash, inviteId, existingDeletedId } = params;
+
 
   let vpn: VpnProvisionResult;
   try {
@@ -147,9 +166,13 @@ async function createMember(params: {
     return NextResponse.json({ errorCode }, { status: 502 });
   }
 
-  // Транзакция: User (+ пометка Invite) — атомарно.
+  // Транзакция: удаление старой DELETED-строки + User (+ пометка Invite) — атомарно.
   await prisma.$transaction(async (tx) => {
+    if (existingDeletedId) {
+      await tx.user.delete({ where: { id: existingDeletedId } });
+    }
     const created = await tx.user.create({
+
       data: {
         login,
         passwordHash,

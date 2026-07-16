@@ -1,37 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
+import { usePendingAction } from "@/5shared/lib/hooks";
 import { getErrorMessage } from "@/5shared/lib/errors";
-import { createInvite, getInvites, type InviteInfo } from "../api";
+import { createInvite, deleteInvite } from "../api";
 
+/**
+ * Бизнес-логика менеджера инвайт-кодов.
+ * Убрана загрузка данных (invites приходят с сервера), оставлены только мутации.
+ */
 export function useInviteManager(groupId: string) {
-  const [invites, setInvites] = useState<InviteInfo[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
+  const { pendingKey: deletingId, execute } = usePendingAction<string>();
   const [error, setError] = useState<string | null>(null);
-
-  async function loadInvites() {
-    setIsLoading(true);
-    try {
-      const data = await getInvites(groupId);
-      setInvites(data);
-      setHasLoaded(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  // Тоггл секции: при первом раскрытии подгружаем инвайты.
-  async function toggleOpen() {
-    const next = !isOpen;
-    setIsOpen(next);
-    if (next && !hasLoaded) {
-      await loadInvites();
-    }
-  }
 
   async function handleGenerate() {
     setError(null);
@@ -42,15 +26,23 @@ export function useInviteManager(groupId: string) {
         setError(getErrorMessage(result.errorCode));
         return;
       }
-
-      // Копируем сгенерированный код в буфер (best-effort).
       await navigator.clipboard.writeText(result.code).catch(() => null);
-
-      await loadInvites();
-      setIsOpen(true);
+      router.refresh();
     } finally {
       setIsGenerating(false);
     }
+  }
+
+  async function handleDelete(inviteId: string) {
+    setError(null);
+    await execute(inviteId, async () => {
+      const result = await deleteInvite(inviteId);
+      if (!result.ok) {
+        setError(getErrorMessage(result.errorCode));
+        return;
+      }
+      router.refresh();
+    });
   }
 
   async function handleCopy(code: string) {
@@ -58,14 +50,11 @@ export function useInviteManager(groupId: string) {
   }
 
   return {
-    invites,
-    isOpen,
-    toggleOpen,
-    hasLoaded,
-    isLoading,
     isGenerating,
+    deletingId,
     error,
     handleGenerate,
     handleCopy,
+    handleDelete,
   };
 }

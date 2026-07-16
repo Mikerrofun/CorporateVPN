@@ -13,6 +13,10 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.FORBIDDEN]: "Доступ запрещен",
   [ErrorCode.INVALID_CREDENTIALS]: "Неверный логин или пароль",
   [ErrorCode.RATE_LIMIT_EXCEEDED]: "Слишком много попыток. Попробуйте позже.",
+  [ErrorCode.ACCOUNT_DELETED]:
+    "Ваш инвайт-код удалён администратором. Зарегистрируйтесь заново по новому коду.",
+  [ErrorCode.USER_BANNED]: "Ваш аккаунт заблокирован администратором.",
+
 
   // ── General ───────────────────────────────────────────────────────
   [ErrorCode.SOMETHING_WRONG]: "Что-то пошло не так. Попробуйте позже.",

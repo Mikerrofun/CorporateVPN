@@ -97,11 +97,16 @@ export const authOptions: AuthOptions = {
         });
 
         if (!user) return null;
-        if (user.status !== "ACTIVE") return null;
-        if (user.group.status !== "ACTIVE") return null;
 
+        // Пароль проверяем ДО статуса: иначе можно перечислять статусы
+        // чужих login (энумерация). Спец-ошибки даём только после верификации.
         const valid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!valid) return null;
+
+        if (user.status === "DELETED") throw new Error(ErrorCode.ACCOUNT_DELETED);
+        if (user.status === "BANNED") throw new Error(ErrorCode.USER_BANNED);
+        if (user.group.status !== "ACTIVE") throw new Error(ErrorCode.GROUP_SUSPENDED);
+
 
         return {
           id: user.id,

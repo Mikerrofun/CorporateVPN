@@ -1,2 +1,3 @@
 export { InviteManager } from "./ui/InviteManager";
-export { getInvites, type InviteInfo } from "./api";
+export { deleteInvite, getInvites, type InviteInfo } from "./api";
+
