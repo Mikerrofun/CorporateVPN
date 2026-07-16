@@ -32,7 +32,8 @@ export function useUserLogin() {
     if (res?.error) {
       // Удалённый инвайт-код: сотрудника больше нет — отправляем на регистрацию.
       if (res.error === ErrorCode.ACCOUNT_DELETED) {
-        router.push("/register");
+        setServerError("Ваш инвайт-код удалён. Перенаправляем на регистрацию...");
+        setTimeout(() => router.push("/register"), 1500); // 1.5 сек
         return;
       }
       setServerError(getErrorMessage(res.error, "Неверный логин или пароль"));

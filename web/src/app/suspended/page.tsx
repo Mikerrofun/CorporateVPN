@@ -21,7 +21,7 @@ export const metadata: Metadata = {
  */
 export default async function SuspendedPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.isAdmin) redirect("/login");
+  if (!session || session.user.isAdmin) redirect("/admin");
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },

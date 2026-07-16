@@ -1,10 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
 import { ConfirmDialog } from "@/5shared/ui";
-import { userAction } from "../../api/userAction";
+import { useMembersTable } from "../../model/useMembersTable";
 
 type Member = {
   id: string;
@@ -21,18 +18,7 @@ type MembersTableProps = {
  * DELETED-участники сюда не попадают (фильтруются на сервере).
  */
 export function MembersTable({ members }: MembersTableProps) {
-  const router = useRouter();
-  const [busyId, setBusyId] = useState<string | null>(null);
-
-  async function run(userId: string, action: "ban" | "unban" | "delete") {
-    setBusyId(userId);
-    try {
-      await userAction(userId, { action });
-      router.refresh();
-    } finally {
-      setBusyId(null);
-    }
-  }
+  const { pendingUserId, runAction } = useMembersTable();
 
   if (members.length === 0) return null;
 
@@ -65,8 +51,8 @@ export function MembersTable({ members }: MembersTableProps) {
                 {u.status === "BANNED" ? (
                   <button
                     type="button"
-                    onClick={() => run(u.id, "unban")}
-                    disabled={busyId === u.id}
+                    onClick={() => runAction(u.id, "unban")}
+                    disabled={pendingUserId === u.id}
                     className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 disabled:opacity-50"
                   >
                     Разбан
@@ -76,7 +62,7 @@ export function MembersTable({ members }: MembersTableProps) {
                     trigger={
                       <button
                         type="button"
-                        disabled={busyId === u.id}
+                        disabled={pendingUserId === u.id}
                         className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 disabled:opacity-50"
                       >
                         Бан
@@ -85,7 +71,7 @@ export function MembersTable({ members }: MembersTableProps) {
                     title="Заблокировать сотрудника?"
                     description="Сотрудник временно потеряет доступ к VPN."
                     confirmLabel="Заблокировать"
-                    onConfirm={() => run(u.id, "ban")}
+                    onConfirm={() => runAction(u.id, "ban")}
                   />
                 )}
 
@@ -93,7 +79,7 @@ export function MembersTable({ members }: MembersTableProps) {
                   trigger={
                     <button
                       type="button"
-                      disabled={busyId === u.id}
+                      disabled={pendingUserId === u.id}
                       title="Удалить"
                       className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 disabled:opacity-50"
                     >
@@ -103,7 +89,7 @@ export function MembersTable({ members }: MembersTableProps) {
                   title="Удалить сотрудника?"
                   description="Сотрудник потеряет доступ к VPN. Слот в группе освободится."
                   confirmLabel="Удалить"
-                  onConfirm={() => run(u.id, "delete")}
+                  onConfirm={() => runAction(u.id, "delete")}
                 />
               </div>
             </td>

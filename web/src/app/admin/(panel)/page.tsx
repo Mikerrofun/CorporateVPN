@@ -56,7 +56,7 @@ export default async function AdminPage() {
             {/* Members */}
             <MembersTable members={group.members} />
 
-            <InviteManager groupId={group.id} maxMembers={group.maxMembers} />
+            <InviteManager groupId={group.id} maxMembers={group.maxMembers} invites={group.invites} />
 
           </div>
         ))}

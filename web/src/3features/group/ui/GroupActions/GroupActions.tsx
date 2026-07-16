@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 import { ConfirmDialog } from "@/5shared/ui";
-import { groupAction } from "../../api/groupAction";
+import { useGroupActions } from "../../model/useGroupActions";
 
 type GroupActionsProps = {
   groupId: string;
@@ -17,27 +16,20 @@ type GroupActionsProps = {
  * Поповер — простой useState-toggle без сторонних либ.
  */
 export function GroupActions({ groupId, status }: GroupActionsProps) {
-  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const { isPending, runAction } = useGroupActions(groupId);
 
   async function run(action: "suspend" | "resume" | "rotate" | "delete") {
-    setBusy(true);
-    try {
-      await groupAction(groupId, { action });
-      router.refresh();
-    } finally {
-      setBusy(false);
-      setMenuOpen(false);
-    }
-  }
+    await runAction(action);
+    setMenuOpen(false);
+}
 
   return (
     <div className="relative">
       <button
         type="button"
         onClick={() => setMenuOpen((v) => !v)}
-        disabled={busy}
+        disabled={isPending !== null}
         aria-label="Действия"
         className="rounded-lg px-2 py-1 text-lg leading-none text-slate-400 hover:bg-white/5 hover:text-slate-200 disabled:opacity-50"
       >

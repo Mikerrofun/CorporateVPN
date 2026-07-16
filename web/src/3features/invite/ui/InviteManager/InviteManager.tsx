@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { ConfirmDialog } from "@/5shared/ui";
 import { useInviteManager } from "../../model/useInviteManager";
-
+import type { InviteInfo } from "@/3features/group/model/types";
 
 type InviteManagerProps = {
   groupId: string;
   maxMembers: number;
+  invites: InviteInfo[]; // ← серверные данные
 };
 
 function formatDate(date: Date | null): string {
@@ -20,13 +22,9 @@ function formatDate(date: Date | null): string {
   });
 }
 
-export function InviteManager({ groupId, maxMembers }: InviteManagerProps) {
+export function InviteManager({ groupId, maxMembers, invites }: InviteManagerProps) {
+  const [isOpen, setIsOpen] = useState(false); // ← локальный UI-стейт
   const {
-    invites,
-    isOpen,
-    toggleOpen,
-    hasLoaded,
-    isLoading,
     isGenerating,
     deletingId,
     error,
@@ -53,24 +51,22 @@ export function InviteManager({ groupId, maxMembers }: InviteManagerProps) {
       <div>
         <button
           type="button"
-          onClick={toggleOpen}
+          onClick={() => setIsOpen((v) => !v)}
           className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200"
         >
           <span className={`transition-transform ${isOpen ? "rotate-90" : ""}`}>▸</span>
-          Персональные коды{hasLoaded ? ` (${invites.length} из ${maxMembers})` : ""}
+          Персональные коды {` (${invites.length} из ${maxMembers})`}
         </button>
 
         {/* Collapsible: плавное раскрытие через max-height */}
         <div
           className={`overflow-hidden transition-all duration-300 ${isOpen ? "max-h-[600px] mt-3" : "max-h-0"}`}
         >
-          {isLoading && <p className="text-xs text-slate-500">Загрузка…</p>}
-
-          {!isLoading && hasLoaded && invites.length === 0 && (
+          {invites.length === 0 && (
             <p className="text-xs text-slate-500">Персональных кодов пока нет.</p>
           )}
 
-          {!isLoading && invites.length > 0 && (
+          {invites.length > 0 && (
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wider text-slate-500">
