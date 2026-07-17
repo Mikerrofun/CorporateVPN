@@ -101,26 +101,26 @@ export function InviteManager({ groupId, maxMembers, invites }: InviteManagerPro
                       {invite.usedBy?.login ?? "—"}
                     </td>
                     <td className="py-2 text-right">
-                      <ConfirmDialog
-                        trigger={
-                          <button
-                            type="button"
-                            title="Удалить"
-                            disabled={deletingId === invite.id}
-                            className="rounded-md px-2 py-1 text-sm text-slate-500 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-50"
-                          >
-                            🗑
-                          </button>
-                        }
-                        title={invite.usedAt ? "Удалить код и сотрудника" : "Удалить код"}
-                        description={
-                          invite.usedAt
-                            ? "Сотрудник потеряет доступ к VPN, а код будет удалён."
-                            : "Код будет удалён."
-                        }
-                        confirmLabel="Удалить"
-                        onConfirm={() => handleDelete(invite.id)}
-                      />
+                      {!invite.usedAt ? (
+                        <ConfirmDialog
+                          trigger={
+                            <button
+                              type="button"
+                              title="Удалить"
+                              disabled={deletingId === invite.id}
+                              className="rounded-md px-2 py-1 text-sm text-slate-500 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-50"
+                            >
+                              🗑
+                            </button>
+                          }
+                          title="Удалить код"
+                          description="Код будет удалён."
+                          confirmLabel="Удалить"
+                          onConfirm={() => handleDelete(invite.id)}
+                        />
+                      ) : (
+                        <span className="text-xs text-slate-500">—</span>
+                      )}
                     </td>
                   </tr>
 

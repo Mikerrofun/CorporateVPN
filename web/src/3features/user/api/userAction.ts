@@ -57,8 +57,22 @@ export async function userAction(userId: string, input: UserAction): Promise<Act
       // Soft-delete: VPN отключаем best-effort, юзер помечается DELETED
       // (строка живёт в БД для спец-ошибки на входе, аккаунт Marzban не удаляем).
       await setVpnStatus(user.marzbanUsername, "disabled").catch(() => null);
-      await prisma.user.update({ where: { id: user.id }, data: { status: "DELETED" } });
-      await audit("user_delete");
+      
+      // Проверяем, есть ли инвайт (юзер зашёл по INV-коду).
+      const invite = await prisma.invite.findUnique({ 
+        where: { usedById: user.id } 
+      });
+      
+      await prisma.$transaction([
+        prisma.user.update({ 
+          where: { id: user.id }, 
+          data: { status: "DELETED" } 
+        }),
+        // Если инвайт есть — удаляем (освобождаем место в счётчике).
+        ...(invite ? [prisma.invite.delete({ where: { id: invite.id } })] : []),
+      ]);
+      
+      await audit("user_delete", `user=${user.login} invite=${invite ? "deleted" : "none"}`);
       break;
     }
 
