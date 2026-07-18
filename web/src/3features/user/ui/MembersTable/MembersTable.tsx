@@ -2,21 +2,9 @@
 
 import { ConfirmDialog } from "@/5shared/ui";
 import { useMembersTable } from "../../model/useMembersTable";
+import {MembersTableProps} from '../../model/types'
 
-type Member = {
-  id: string;
-  login: string;
-  status: "ACTIVE" | "BANNED" | "DELETED";
-};
 
-type MembersTableProps = {
-  members: Member[];
-};
-
-/**
- * Таблица участников группы с действиями: бан/разбан и удаление.
- * DELETED-участники сюда не попадают (фильтруются на сервере).
- */
 export function MembersTable({ members }: MembersTableProps) {
   const { pendingUserId, runAction } = useMembersTable();
 
@@ -28,6 +16,7 @@ export function MembersTable({ members }: MembersTableProps) {
         <tr className="text-left text-xs uppercase tracking-wider text-slate-500">
           <th className="pb-2">Логин</th>
           <th className="pb-2">Статус</th>
+          <th className="pb-2">Доступ</th>
           <th className="pb-2 text-right">Действия</th>
         </tr>
       </thead>
@@ -44,6 +33,17 @@ export function MembersTable({ members }: MembersTableProps) {
                 }`}
               >
                 {u.status === "ACTIVE" ? "Активен" : "Заблокирован"}
+              </span>
+            </td>
+            <td className="py-2">
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  u.registrationType === "INVITE"
+                    ? "bg-blue-500/10 text-blue-400"
+                    : "bg-purple-500/10 text-purple-400"
+                }`}
+              >
+                {u.registrationType === "INVITE" ? "Персональный" : "Групповой"}
               </span>
             </td>
             <td className="py-2">

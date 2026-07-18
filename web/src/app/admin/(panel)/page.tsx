@@ -2,7 +2,7 @@ import { getGroups } from "@/3features/group/api/getGroups";
 import { CreateGroupForm, GroupActions } from "@/3features/group";
 import { InviteManager } from "@/3features/invite";
 import { MembersTable } from "@/3features/user/ui/MembersTable/MembersTable";
-
+import { Member } from "@/3features/user/model/types";
 
 
 export default async function AdminPage() {
@@ -45,6 +45,11 @@ export default async function AdminPage() {
             (member) => !invMemberIds.has(member.id)
           ).length;
 
+          const membersWithType: Member[] = group.members.map((member) => ({
+               ...member,
+             registrationType: invMemberIds.has(member.id) ? "INVITE" : "GROUP",
+          }));
+
           return (
             <div key={group.id} className="card border border-white/[0.04] bg-panel/20 space-y-4">
               <div className="flex items-start justify-between">
@@ -63,7 +68,7 @@ export default async function AdminPage() {
               </div>
 
               {/* Members */}
-              <MembersTable members={group.members} />
+              <MembersTable members={membersWithType} />
 
               <InviteManager 
                 groupId={group.id} 
