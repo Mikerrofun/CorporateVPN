@@ -8,7 +8,8 @@ import type { InviteInfo } from "@/3features/group/model/types";
 type InviteManagerProps = {
   groupId: string;
   maxMembers: number;
-  invites: InviteInfo[]; // ← серверные данные
+  livingMembersCount: number;
+  invites: InviteInfo[]; 
 };
 
 function formatDate(date: Date | null): string {
@@ -22,7 +23,7 @@ function formatDate(date: Date | null): string {
   });
 }
 
-export function InviteManager({ groupId, maxMembers, invites }: InviteManagerProps) {
+export function InviteManager({ groupId, maxMembers, livingMembersCount, invites }: InviteManagerProps) {
   const [isOpen, setIsOpen] = useState(false); // ← локальный UI-стейт
   const {
     isGenerating,
@@ -32,6 +33,10 @@ export function InviteManager({ groupId, maxMembers, invites }: InviteManagerPro
     handleCopy,
     handleDelete,
   } = useInviteManager(groupId);
+
+
+  const unusedInvitesCount = invites.filter((inv) => !inv.usedAt).length;
+  const maxPossibleInvites = maxMembers - livingMembersCount;
 
 
   return (
@@ -55,7 +60,7 @@ export function InviteManager({ groupId, maxMembers, invites }: InviteManagerPro
           className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200"
         >
           <span className={`transition-transform ${isOpen ? "rotate-90" : ""}`}>▸</span>
-          Персональные коды {` (${invites.length} из ${maxMembers})`}
+          Персональные коды {` (${unusedInvitesCount} из ${maxPossibleInvites})`}
         </button>
 
         {/* Collapsible: плавное раскрытие через max-height */}
