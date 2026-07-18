@@ -90,7 +90,42 @@ async function registerWithGroupCode(
     return NextResponse.json({ errorCode: ErrorCode.GROUP_FULL }, { status: 409 });
   }
 
-  return createMember({ group, login, passwordHash, existingDeletedId });
+  const response = await createMember({ group, login, passwordHash, existingDeletedId });
+
+  // Автоочистка: GRP-юзер занял место, проверяем orphan-инвайты.
+  if (response.status === 201) {
+    const updatedGroup = await prisma.group.findUnique({
+      where: { id: group.id },
+      select: {
+        maxMembers: true,
+        _count: {
+          select: {
+            members: { where: { status: { not: "DELETED" } } },
+            invites: { where: { usedAt: null } },
+          },
+        },
+      },
+    });
+
+    if (updatedGroup) {
+      const freeSlots = updatedGroup.maxMembers - updatedGroup._count.members;
+      const unusedInvites = updatedGroup._count.invites;
+
+      if (unusedInvites > freeSlots) {
+        // Удаляем самый старый unused инвайт (один за раз).
+        const oldestInvite = await prisma.invite.findFirst({
+          where: { groupId: group.id, usedAt: null },
+          orderBy: { createdAt: "asc" },
+          select: { id: true },
+        });
+        if (oldestInvite) {
+          await prisma.invite.delete({ where: { id: oldestInvite.id } });
+        }
+      }
+    }
+  }
+
+  return response;
 }
 
 
