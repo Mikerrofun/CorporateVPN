@@ -36,35 +36,45 @@ export default async function AdminPage() {
 
       {/* Groups list */}
       <section className="grid gap-6">
-        {groups.map((group) => (
-          <div key={group.id} className="card border border-white/[0.04] bg-panel/20 space-y-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-white">{group.name}</h2>
-                <p className="text-xs text-slate-400 mt-1">
-                  {group._count.members} / {group.maxMembers} участников · код: <span className="font-mono text-slate-300">{group.groupCode}</span>
-                </p>
-                {group.status === "SUSPENDED" && (
-                  <span className="mt-2 inline-block rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs font-semibold text-rose-400 border border-rose-500/20">
-                    Приостановлено
-                  </span>
-                )}
+        {groups.map((group) => {
+
+          const invMemberIds = new Set(
+            group.invites.filter((inv) => inv.usedBy).map((inv) => inv.usedBy!.id)
+          );
+          const grpMembersCount = group.members.filter(
+            (member) => !invMemberIds.has(member.id)
+          ).length;
+
+          return (
+            <div key={group.id} className="card border border-white/[0.04] bg-panel/20 space-y-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-white">{group.name}</h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {group._count.members} / {group.maxMembers} участников · код: <span className="font-mono text-slate-300">{group.groupCode}</span>
+                  </p>
+                  {group.status === "SUSPENDED" && (
+                    <span className="mt-2 inline-block rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs font-semibold text-rose-400 border border-rose-500/20">
+                      Приостановлено
+                    </span>
+                  )}
+                </div>
+                <GroupActions groupId={group.id} status={group.status} />
               </div>
-              <GroupActions groupId={group.id} status={group.status} />
+
+              {/* Members */}
+              <MembersTable members={group.members} />
+
+              <InviteManager 
+                groupId={group.id} 
+                maxMembers={group.maxMembers} 
+                grpMembersCount={grpMembersCount}
+                invites={group.invites} 
+              />
+
             </div>
-
-            {/* Members */}
-            <MembersTable members={group.members} />
-
-            <InviteManager 
-              groupId={group.id} 
-              maxMembers={group.maxMembers} 
-              livingMembersCount={group._count.members}
-              invites={group.invites} 
-            />
-
-          </div>
-        ))}
+          );
+        })}
         {groups.length === 0 && (
           <div className="text-center py-12 rounded-2xl border border-dashed border-white/[0.08]">
             <p className="text-sm text-slate-400">Групп пока нет.</p>
