@@ -1,5 +1,6 @@
 import { getGroups } from "@/3features/group/api/getGroups";
-import { CreateGroupForm, GroupActions } from "@/3features/group";
+import { CreateGroupForm, GroupActions, RefreshCodeButton } from "@/3features/group";
+
 import { InviteManager } from "@/3features/invite";
 import { MembersTable } from "@/3features/user/ui/MembersTable/MembersTable";
 import { Member } from "@/3features/user/model/types";
@@ -55,9 +56,11 @@ export default async function AdminPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <h2 className="text-lg font-bold text-white">{group.name}</h2>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
                     {group._count.members} / {group.maxMembers} участников · код: <span className="font-mono text-slate-300">{group.groupCode}</span>
+                    <RefreshCodeButton groupId={group.id} />
                   </p>
+
                   {group.status === "SUSPENDED" && (
                     <span className="mt-2 inline-block rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs font-semibold text-rose-400 border border-rose-500/20">
                       Приостановлено

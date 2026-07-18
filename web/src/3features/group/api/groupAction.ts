@@ -6,13 +6,15 @@ import { backend, BackendError, isVpnMockMode, setVpnStatus } from "@/5shared/ap
 import { prisma } from "@/5shared/api/prisma";
 import { requireAdminSession } from "@/5shared/session/guards";
 import { ErrorCode } from "@/5shared/lib/errors";
+import { generateGroupCode } from "@/5shared/lib/codes";
 import { groupActionSchema, type GroupAction } from "../model/schemas";
 import type { ActionResult } from "../model/types";
 
 export async function groupAction(
   groupId: string,
   input: GroupAction,
-): Promise<ActionResult<{ subscriptionUrl?: string }>> {
+): Promise<ActionResult<{ subscriptionUrl?: string; groupCode?: string }>> {
+
   const session = await requireAdminSession();
   if (!session) return { ok: false, errorCode: ErrorCode.UNAUTHORIZED };
 
@@ -47,6 +49,8 @@ export async function groupAction(
   };
 
   try {
+    let resultGroupCode: string | undefined;
+
     switch (parsed.data.action) {
       case "suspend": {
         await setMembersVpnStatus("disabled");
@@ -54,6 +58,14 @@ export async function groupAction(
         await audit("group_suspend");
         break;
       }
+      case "refresh-code": {
+        const groupCode = await generateGroupCode();
+        await prisma.group.update({ where: { id: group.id }, data: { groupCode } });
+        await audit("group_refresh_code");
+        resultGroupCode = groupCode;
+        break;
+      }
+
       case "resume": {
         await setMembersVpnStatus("active");
         await prisma.group.update({ where: { id: group.id }, data: { status: "ACTIVE" } });
@@ -87,8 +99,9 @@ export async function groupAction(
     }
 
     revalidatePath("/admin");
-    return { ok: true };
+    return resultGroupCode ? { ok: true, data: { groupCode: resultGroupCode } } : { ok: true };
   } catch (err) {
+
     const detail = err instanceof BackendError ? err.message : "unknown error";
     console.error(`[groupAction] Действие не выполнено (${detail})`);
     return { ok: false, errorCode: ErrorCode.SOMETHING_WRONG };
