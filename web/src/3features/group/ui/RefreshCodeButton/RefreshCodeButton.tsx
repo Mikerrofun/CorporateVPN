@@ -2,10 +2,7 @@
 
 import { ConfirmDialog } from "@/5shared/ui";
 import { useGroupActions } from "../../model/useGroupActions";
-
-type RefreshCodeButtonProps = {
-  groupId: string;
-};
+import type { RefreshCodeButtonProps } from "./RefreshCodeButton.types";
 
 /**
  * Квадратная кнопка-иконка рядом с кодом группы: генерирует новый
