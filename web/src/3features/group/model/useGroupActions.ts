@@ -2,8 +2,8 @@
 
 import { usePendingAction } from "@/5shared/lib/hooks";
 import { groupAction } from "../api/groupAction";
+import type { GroupActionType } from "../api/groupAction.types";
 
-type GroupActionType = "suspend" | "resume" | "rotate" | "delete";
 
 /**
  * Бизнес-логика действий над группой.
