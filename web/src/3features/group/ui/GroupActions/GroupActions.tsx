@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-import { ConfirmDialog } from "@/5shared/ui";
+import { ConfirmDialog, useToast } from "@/5shared/ui";
+import { getErrorMessage } from "@/5shared/lib/errors";
 import { useGroupActions } from "../../model/useGroupActions";
 
 type GroupActionsProps = {
@@ -18,9 +19,18 @@ type GroupActionsProps = {
 export function GroupActions({ groupId, status }: GroupActionsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { isPending, runAction } = useGroupActions(groupId);
+  const { showSuccess, showError } = useToast();
 
   async function run(action: "suspend" | "resume" | "rotate" | "delete") {
-    await runAction(action);
+    const result = await runAction(action);
+    
+    if (!result?.ok) {
+      showError(getErrorMessage(result?.errorCode));
+      setMenuOpen(false);
+      return;
+    }
+    
+    showSuccess("Успешно");
     setMenuOpen(false);
 }
 

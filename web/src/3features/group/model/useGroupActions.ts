@@ -2,7 +2,7 @@
 
 import { usePendingAction } from "@/5shared/lib/hooks";
 import { groupAction } from "../api/groupAction";
-import type { GroupActionType } from "../api/groupAction.types";
+import type { GroupActionType, GroupActionResult } from "../api/groupAction.types";
 
 
 /**
@@ -12,9 +12,9 @@ import type { GroupActionType } from "../api/groupAction.types";
 export function useGroupActions(groupId: string) {
   const { pendingKey: isPending, execute } = usePendingAction<GroupActionType>();
 
-  async function runAction(action: GroupActionType) {
-    await execute(action, async () => {
-      await groupAction(groupId, { action });
+  async function runAction(action: GroupActionType): Promise<GroupActionResult | undefined> {
+    return await execute(action, async () => {
+      return await groupAction(groupId, { action });
     });
   }
 

@@ -43,7 +43,9 @@ export function RefreshCodeButton({ groupId }: RefreshCodeButtonProps) {
       title="Обновить код группы?"
       description="Старый код перестанет работать для новых регистраций. Уже зарегистрированных участников это не затронет."
       confirmLabel="Обновить"
-      onConfirm={() => runAction("refresh-code")}
+      onConfirm={async () => {
+        await runAction("refresh-code");
+      }}
     />
   );
 }
