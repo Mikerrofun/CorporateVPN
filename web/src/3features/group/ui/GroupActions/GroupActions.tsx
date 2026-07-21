@@ -4,11 +4,7 @@ import { useState } from "react";
 
 import { ConfirmDialog } from "@/5shared/ui";
 import { useGroupActions } from "../../model/useGroupActions";
-
-type GroupActionsProps = {
-  groupId: string;
-  status: "ACTIVE" | "SUSPENDED";
-};
+import type { GroupActionsProps } from "./GroupActions.types";
 
 /**
  * Меню действий над группой («⋯»): приостановка/возобновление, ротация
@@ -17,12 +13,7 @@ type GroupActionsProps = {
  */
 export function GroupActions({ groupId, status }: GroupActionsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isPending, runAction } = useGroupActions(groupId);
-
-  async function run(action: "suspend" | "resume" | "rotate" | "delete") {
-    await runAction(action);
-    setMenuOpen(false);
-}
+  const { isPending, runActionWithToast } = useGroupActions(groupId);
 
   return (
     <div className="relative">
@@ -54,12 +45,12 @@ export function GroupActions({ groupId, status }: GroupActionsProps) {
                 title="Приостановить группу?"
                 description="Все участники потеряют доступ к VPN до возобновления."
                 confirmLabel="Приостановить"
-                onConfirm={() => run("suspend")}
+                onConfirm={() => runActionWithToast("suspend", () => setMenuOpen(false))}
               />
             ) : (
               <button
                 type="button"
-                onClick={() => run("resume")}
+                onClick={() => runActionWithToast("resume", () => setMenuOpen(false))}
                 className="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-300 hover:bg-white/5"
               >
                 Возобновить
@@ -78,7 +69,7 @@ export function GroupActions({ groupId, status }: GroupActionsProps) {
               title="Ротировать ключи?"
               description="Каждому участнику будет выдан новый ключ подписки. Старые перестанут работать."
               confirmLabel="Ротировать"
-              onConfirm={() => run("rotate")}
+              onConfirm={() => runActionWithToast("rotate", () => setMenuOpen(false))}
             />
 
             <ConfirmDialog
@@ -93,7 +84,7 @@ export function GroupActions({ groupId, status }: GroupActionsProps) {
               title="Удалить группу?"
               description="Группа и все её участники будут удалены. Действие необратимо."
               confirmLabel="Удалить"
-              onConfirm={() => run("delete")}
+              onConfirm={() => runActionWithToast("delete", () => setMenuOpen(false))}
             />
           </div>
         </>

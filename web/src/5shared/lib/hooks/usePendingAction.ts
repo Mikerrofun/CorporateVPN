@@ -12,10 +12,11 @@ import { useState } from "react";
 export function usePendingAction<T extends string | number = string>() {
   const [pendingKey, setPendingKey] = useState<T | null>(null);
 
-  async function execute(key: T, action: () => Promise<void>) {
+  async function execute<R>(key: T, action: () => Promise<R>): Promise<R | undefined> {
     setPendingKey(key);
     try {
-      await action();
+      const result = await action();
+      return result;
     } finally {
       setPendingKey(null);
     }

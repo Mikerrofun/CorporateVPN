@@ -6,4 +6,6 @@ export { FormErrorBlock } from './FormErrorBlock';
 export { AuthLink } from './AuthLink';
 export { CustomDialog } from './CustomDialog/CustomDialog';
 export { ConfirmDialog } from './CustomDialog/ConfirmDialog';
+export { ToastProvider, ToastContainer, useToast } from "./Toast";
+export type { ToastType, ToastVariant } from "./Toast";
 
