@@ -10,7 +10,7 @@ import type { RefreshCodeButtonProps } from "./RefreshCodeButton.types";
  * заходов, уже зарегистрированных участников это не затрагивает.
  */
 export function RefreshCodeButton({ groupId }: RefreshCodeButtonProps) {
-  const { isPending, runAction } = useGroupActions(groupId);
+  const { isPending, runActionWithToast } = useGroupActions(groupId);
   const busy = isPending === "refresh-code";
 
   return (
@@ -43,9 +43,7 @@ export function RefreshCodeButton({ groupId }: RefreshCodeButtonProps) {
       title="Обновить код группы?"
       description="Старый код перестанет работать для новых регистраций. Уже зарегистрированных участников это не затронет."
       confirmLabel="Обновить"
-      onConfirm={async () => {
-        await runAction("refresh-code");
-      }}
+      onConfirm={() => runActionWithToast("refresh-code")}
     />
   );
 }
