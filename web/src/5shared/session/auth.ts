@@ -119,12 +119,17 @@ export const authOptions: AuthOptions = {
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.uid = user.id;
         token.isAdmin = user.isAdmin;
         token.groupId = user.groupId;
       }
+
+      if (trigger === 'update' && session?.preferredOS) {
+        token.preferredOS = session.preferredOS;
+      }
+
       return token;
     },
 
@@ -133,6 +138,7 @@ export const authOptions: AuthOptions = {
         session.user.id = token.uid;
         session.user.isAdmin = token.isAdmin;
         session.user.groupId = token.groupId;
+        session.user.preferredOS = token.preferredOS;
       }
       return session;
     },
