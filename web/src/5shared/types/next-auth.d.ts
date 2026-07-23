@@ -1,13 +1,13 @@
 import type { DefaultSession } from "next-auth";
+import type { OS } from "@/5shared/lib/device/types";
 
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      /** true — администратор (из env), false — сотрудник (из БД) */
       isAdmin: boolean;
-      /** Только для сотрудника. null у администратора. */
       groupId: string | null;
+      preferredOS?: OS;
     } & DefaultSession["user"];
   }
 
@@ -22,5 +22,6 @@ declare module "next-auth/jwt" {
     uid: string;
     isAdmin: boolean;
     groupId: string | null;
+    preferredOS?: OS;
   }
 }
