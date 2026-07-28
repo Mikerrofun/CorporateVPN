@@ -6,14 +6,18 @@ import { ConfirmDialog } from "@/5shared/ui";
 import { useGroupActions } from "../../model/useGroupActions";
 import type { GroupActionsProps } from "./GroupActions.types";
 
-/**
- * Меню действий над группой («⋯»): приостановка/возобновление, ротация
- * ключей, удаление. Разрушительные действия подтверждаются через ConfirmDialog.
- * Поповер — простой useState-toggle без сторонних либ.
- */
 export function GroupActions({ groupId, status }: GroupActionsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isPending, runActionWithToast } = useGroupActions(groupId);
+  const { isPending, runActionWithToast, runActionWithToastPayload } =
+    useGroupActions(groupId);
+  const [newMaxMembers, setNewMaxMembers] = useState<number>(10);
+
+  const handleUpdateMaxMembers = () => {
+    runActionWithToastPayload(
+      { action: "update-max-members", maxMembers: newMaxMembers },
+      () => setMenuOpen(false)
+    );
+  };
 
   return (
     <div className="relative">
@@ -29,7 +33,6 @@ export function GroupActions({ groupId, status }: GroupActionsProps) {
 
       {menuOpen && (
         <>
-          {/* клик вне меню закрывает */}
           <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
           <div className="absolute right-0 z-20 mt-1 w-52 rounded-xl border border-white/[0.08] bg-panel p-1 shadow-xl shadow-black/40">
             {status === "ACTIVE" ? (
@@ -71,6 +74,27 @@ export function GroupActions({ groupId, status }: GroupActionsProps) {
               confirmLabel="Ротировать"
               onConfirm={() => runActionWithToast("rotate", () => setMenuOpen(false))}
             />
+
+            <div className="flex items-center gap-2 px-3 py-2">
+              <span className="text-sm text-slate-300">Лимит:</span>
+              <input
+                type="number"
+                min={1}
+                max={10}
+                value={newMaxMembers}
+                onChange={(e) => setNewMaxMembers(Number(e.target.value))}
+                className="w-14 rounded border border-white/10 bg-black/30 px-2 py-1 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button
+                type="button"
+                onClick={handleUpdateMaxMembers}
+                className="rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                disabled={isPending === "update-max-members"}
+              >
+                Обновить
+              </button>
+            </div>
 
             <ConfirmDialog
               trigger={

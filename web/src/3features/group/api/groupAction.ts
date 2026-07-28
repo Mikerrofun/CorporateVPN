@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 
-import { backend, BackendError, isVpnMockMode, setVpnStatus } from "@/5shared/api/backend-client";
-import { prisma } from "@/5shared/api/prisma";
-import { requireAdminSession } from "@/5shared/session/guards";
-import { ErrorCode } from "@/5shared/lib/errors";
-import { generateGroupCode } from "@/5shared/lib/codes";
+import { backend, BackendError, isVpnMockMode, setVpnStatus } from "@5shared/api/backend-client";
+import { prisma } from "@5shared/api/prisma";
+import { requireAdminSession } from "@5shared/session/guards";
+import { ErrorCode } from "@5shared/lib/errors";
+import { generateGroupCode } from "@5shared/lib/codes";
 import { groupActionSchema, type GroupAction } from "../model/schemas";
 import type { GroupActionResult } from "./groupAction.types";
 
@@ -14,15 +14,12 @@ export async function groupAction(
   groupId: string,
   input: GroupAction,
 ): Promise<GroupActionResult> {
-
   const session = await requireAdminSession();
   if (!session) return { ok: false, errorCode: ErrorCode.UNAUTHORIZED };
 
   const parsed = groupActionSchema.safeParse(input);
   if (!parsed.success) return { ok: false, errorCode: ErrorCode.VALIDATION_ERROR };
 
-  // VPN-аккаунты индивидуальные — групповые действия применяются
-  // ко всем участникам группы (кроме уже забаненных лично).
   const group = await prisma.group.findUnique({
     where: { id: groupId },
     include: {
@@ -42,10 +39,13 @@ export async function groupAction(
       })
       .catch(() => null);
 
-  /** Меняет статус Marzban-аккаунтов всех участников (кроме BANNED — у них свой статус). */
   const setMembersVpnStatus = async (status: "active" | "disabled") => {
-    const targets = group.members.filter((m) => m.marzbanUsername && m.status !== "BANNED");
-    await Promise.all(targets.map((m) => setVpnStatus(m.marzbanUsername, status)));
+    const targets = group.members.filter(
+      (m: any) => m.marzbanUsername && m.status !== "BANNED"
+    );
+    await Promise.all(
+      targets.map((m: any) => setVpnStatus(m.marzbanUsername, status))
+    );
   };
 
   try {
@@ -71,10 +71,10 @@ export async function groupAction(
         await audit("group_resume");
         break;
       }
+
       case "rotate": {
-        // Ротация индивидуальная: каждому участнику — новый subscription URL.
         if (!isVpnMockMode) {
-          for (const m of group.members) {
+          for (const m of (group.members as any[])) {
             if (!m.marzbanUsername) continue;
             const { subscription_url } = await backend.rotateKey(m.marzbanUsername);
             await prisma.user.update({
@@ -86,21 +86,40 @@ export async function groupAction(
         await audit("group_rotate", `group=${group.name} members=${group.members.length}`);
         break;
       }
+
       case "delete": {
-        // Best-effort отключение VPN всех участников, затем каскадное удаление.
         await Promise.all(
-          group.members.map((m) => setVpnStatus(m.marzbanUsername, "disabled").catch(() => null)),
+          (group.members as any[]).map((m) =>
+            setVpnStatus(m.marzbanUsername, "disabled").catch(() => null)
+          )
         );
         await prisma.group.delete({ where: { id: group.id } });
         await audit("group_delete");
         break;
+      }
+
+      case "update-max-members": {
+        const { maxMembers } = parsed.data;
+        const oldMaxMembers = group.maxMembers;
+
+        const updated = await prisma.group.update({
+          where: { id: group.id },
+          data: { maxMembers },
+        });
+
+        await audit(
+          "group_update_max_members",
+          `group=${group.name} old=${oldMaxMembers} new=${maxMembers}`
+        );
+
+        revalidatePath("/admin");
+        return { ok: true, data: { maxMembers: updated.maxMembers } };
       }
     }
 
     revalidatePath("/admin");
     return { ok: true };
   } catch (err) {
-
     const detail = err instanceof BackendError ? err.message : "unknown error";
     console.error(`[groupAction] Действие не выполнено (${detail})`);
     return { ok: false, errorCode: ErrorCode.SOMETHING_WRONG };

@@ -1,11 +1,10 @@
 import { z } from "zod";
 import { ErrorCode } from "@/5shared/lib/errors";
 
-// message = ErrorCode: клиент переводит код в текст через getErrorMessage
 export const createGroupSchema = z.object({
   name: z.string().min(1, ErrorCode.GROUP_NAME_REQUIRED).max(120),
   maxMembers: z
-    .number({ invalid_type_error: ErrorCode.MAX_MEMBERS_RANGE })
+    .number(ErrorCode.MAX_MEMBERS_RANGE)
     .int(ErrorCode.MAX_MEMBERS_RANGE)
     .min(1, ErrorCode.MAX_MEMBERS_RANGE)
     .max(10, ErrorCode.MAX_MEMBERS_RANGE),
@@ -17,8 +16,15 @@ export const groupActionSchema = z.union([
   z.object({ action: z.literal("rotate") }),
   z.object({ action: z.literal("delete") }),
   z.object({ action: z.literal("refresh-code") }),
+  z.object({
+    action: z.literal("update-max-members"),
+    maxMembers: z
+      .number(ErrorCode.MAX_MEMBERS_RANGE)
+      .int(ErrorCode.MAX_MEMBERS_RANGE)
+      .min(1, ErrorCode.MAX_MEMBERS_RANGE)
+      .max(10, ErrorCode.MAX_MEMBERS_RANGE),
+  }),
 ]);
-
 
 export type CreateGroupInput = z.infer<typeof createGroupSchema>;
 export type GroupAction = z.infer<typeof groupActionSchema>;
