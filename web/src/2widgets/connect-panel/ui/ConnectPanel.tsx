@@ -1,36 +1,57 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { Dropdown, SwitchGlobal } from '@/5shared/ui';
+import { useConnectPanel } from '../model/useConnectPanel';
+import { Instructions } from './Instructions';
+import type { OS } from '@/5shared/lib/device/types';
+import type { ConnectPanelProps } from '../model/types';
+import type { DropdownOption } from '@/5shared/ui/Dropdown';
 
-type Os = "windows" | "macos" | "linux" | "android";
+function AppleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.71-1.517 0-1.9-.88-3.63-.88-1.698 0-2.302.91-3.67.91-1.377 0-2.332-1.26-3.428-2.8-1.287-1.82-2.323-4.63-2.323-7.28 0-4.28 2.797-6.55 5.552-6.55 1.448 0 2.675.95 3.6.95.865 0 2.222-1.01 3.902-1.01.613 0 2.886.06 4.374 2.19-.13.09-2.383 1.37-2.383 4.19 0 3.26 2.854 4.42 2.954 4.45z" />
+    </svg>
+  );
+}
 
-const DOWNLOAD_LINKS: Record<Os, string> = {
-  windows: "https://github.com/hiddify/hiddify-next/releases/latest",
-  macos: "https://github.com/hiddify/hiddify-next/releases/latest",
-  linux: "https://github.com/hiddify/hiddify-next/releases/latest",
-  android: "https://github.com/hiddify/hiddify-next/releases/latest",
-};
+function AndroidIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.43 11.43 0 00-8.94 0L5.65 5.67c-.19-.29-.58-.38-.87-.2-.28.18-.37.54-.22.83L6.4 9.48A10.81 10.81 0 001 18h22a10.81 10.81 0 00-5.4-8.52zM7 15.25a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5zm10 0a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5z" />
+    </svg>
+  );
+}
 
-const OS_LABELS: Record<Os, string> = {
-  windows: "Windows",
-  macos: "macOS",
-  linux: "Linux",
-  android: "Android",
-};
+function WindowsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M3 5.55L10.6 4.5v6.5H3V5.55zM11.6 4.35L21 3v8H11.6V4.35zM3 12h7.6v6.5L3 17.45V12zM11.6 12H21v9l-9.4-1.35V12z" />
+    </svg>
+  );
+}
 
-export function ConnectPanel({ subscriptionUrl }: { subscriptionUrl: string | null }) {
-  const [os, setOs] = useState<Os>("windows");
-  const [copied, setCopied] = useState(false);
+const OS_OPTIONS: DropdownOption[] = [
+  { key: 'ios' as OS, label: 'iOS', icon: AppleIcon },
+  { key: 'android' as OS, label: 'Android', icon: AndroidIcon },
+  { key: 'windows' as OS, label: 'Windows', icon: WindowsIcon },
+  { key: 'mac' as OS, label: 'macOS', icon: AppleIcon },
+];
+
+export function ConnectPanel({ subscriptionUrl }: ConnectPanelProps) {
+  const {
+    os,
+    activeApp,
+    apps,
+    currentApp,
+    handleOSChange,
+    handleAppChange,
+  } = useConnectPanel();
 
   if (!subscriptionUrl) {
     return (
       <div className="card border border-rose-500/10 bg-rose-500/5 p-6 text-center">
-        <svg className="mx-auto h-8 w-8 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        <p className="mt-3 text-sm font-semibold text-rose-300">
-          VPN-ключ еще не выдан.
-        </p>
+        <p className="text-sm font-semibold text-rose-300">VPN-ключ еще не выдан.</p>
         <p className="mt-1 text-xs text-slate-400">
           Пожалуйста, свяжитесь с системным администратором вашей компании для активации доступа.
         </p>
@@ -38,100 +59,48 @@ export function ConnectPanel({ subscriptionUrl }: { subscriptionUrl: string | nu
     );
   }
 
-  const deepLink = `hiddify://import/${encodeURIComponent(subscriptionUrl)}`;
-
-  async function copyKey() {
-    await navigator.clipboard.writeText(subscriptionUrl!);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  if (!currentApp) {
+    return null;
   }
 
   return (
-    <div className="card space-y-6">
-      <div>
-        <h2 className="text-lg font-bold tracking-tight text-white mb-4">Настройка VPN-подключения</h2>
-        <p className="label">1. Выберите вашу платформу</p>
-        <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/[0.05] bg-black/35 p-1.5 sm:grid-cols-4">
-          {(Object.keys(OS_LABELS) as Os[]).map((key) => (
-            <button
-              id={`platform-btn-${key}`}
-              key={key}
-              onClick={() => setOs(key)}
-              className={`rounded-xl py-2 px-3 text-xs font-bold transition-all duration-200 ${
-                os === key
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/10"
-                  : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
-              }`}
-            >
-              {OS_LABELS[key]}
-            </button>
-          ))}
+    <div className="card space-y-5">
+      <div className="flex flex-col gap-3">
+        <h2 className="text-lg font-bold tracking-tight text-white">
+          Как подключиться?
+        </h2>
+
+        <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+          <SwitchGlobal
+            equalWidth
+            options={apps.map((app) => ({
+              key: app.id,
+              component: (
+                <span
+                  className={`flex h-11 items-center justify-center p-3.5 text-sm font-normal leading-none transition-colors duration-200 ${
+                    activeApp === app.id ? 'text-white' : 'text-slate-400'
+                  }`}
+                >
+                  {app.label}
+                </span>
+              ),
+            }))}
+            value={activeApp || ''}
+            onChange={handleAppChange}
+            className="border border-white/[0.05] bg-black/35 p-1 flex-[3]"
+            sliderClassName="bg-gradient-to-r from-blue-600 to-indigo-600"
+          />
+
+          <Dropdown
+            className="sm:flex-[2]"
+            value={os}
+            options={OS_OPTIONS}
+            onSelect={(key) => handleOSChange(key as OS)}
+          />
         </div>
       </div>
 
-      <div>
-        <p className="label">2. Загрузите клиент (Hiddify Next)</p>
-        <a
-          id="client-download-link"
-          href={DOWNLOAD_LINKS[os]}
-          target="_blank"
-          rel="noreferrer"
-          className="btn-ghost w-full py-3 flex items-center justify-center gap-2"
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-          Скачать для {OS_LABELS[os]}
-        </a>
-      </div>
-
-      <div>
-        <p className="label">3. Скопируйте ключ или импортируйте напрямую</p>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="flex-1 overflow-hidden rounded-xl border border-white/[0.05] bg-black/40 px-3.5 py-2.5">
-            <code className="block overflow-x-auto whitespace-nowrap text-xs text-blue-300 scrollbar-none font-mono">
-              {subscriptionUrl}
-            </code>
-          </div>
-          <button
-            id="copy-subscription-key-btn"
-            className="btn-ghost py-2.5 px-4 shrink-0 flex items-center justify-center gap-2"
-            onClick={copyKey}
-          >
-            {copied ? (
-              <>
-                <svg className="h-4 w-4 text-emerald-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-emerald-400">Скопировано!</span>
-              </>
-            ) : (
-              <>
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-5 4h5m-5 4h5m-2 5h2" />
-                </svg>
-                <span>Скопировать</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
-      <div className="pt-2">
-        <a
-          id="connect-vpn-deeplink"
-          href={deepLink}
-          className="btn-primary w-full py-3.5 text-base flex items-center justify-center gap-2 shadow-xl shadow-blue-500/10 hover:shadow-blue-500/20"
-        >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          Импортировать в Hiddify
-        </a>
-        <p className="mt-2.5 text-center text-xs text-slate-500">
-          Клик по кнопке автоматически откроет установленный клиент и импортирует подписку.
-        </p>
-      </div>
+      <Instructions app={currentApp} subscriptionUrl={subscriptionUrl} />
     </div>
   );
 }

@@ -7,3 +7,9 @@ export { AuthLink } from './AuthLink';
 export { CustomDialog } from './CustomDialog/CustomDialog';
 export { ConfirmDialog } from './CustomDialog/ConfirmDialog';
 
+export { Dropdown } from './Dropdown';
+export type { DropdownProps, DropdownOption } from './Dropdown';
+
+export { SwitchGlobal } from './SwitchGlobal';
+export type { SwitchGlobalProps, SwitchOption } from './SwitchGlobal';
+
