@@ -1,33 +1,30 @@
 "use client";
 
+import { useState } from "react";
+
 import { usePendingAction } from "@/5shared/lib/hooks";
 import { useToast } from "@/5shared/ui";
 import { getErrorMessage } from "@/5shared/lib/errors";
 import { groupAction } from "../api/groupAction";
-import type { GroupActionType, GroupActionResult } from "../api/groupAction.types";
+import type { GroupActionResult, GroupActionType } from "../api/groupAction.types";
 import type { GroupAction } from "./schemas";
 
 export function useGroupActions(groupId: string) {
-  const { pendingKey: isPending, execute } = usePendingAction<GroupActionType | string>();
+  const { pendingKey: isPending, execute } = usePendingAction<GroupActionType>();
   const { showSuccess, showError } = useToast();
+  const [newMaxMembers, setNewMaxMembers] = useState<number>(10);
 
-  async function runAction(action: GroupActionType): Promise<GroupActionResult | undefined> {
-    return await execute(action, async () => {
-      return await groupAction(groupId, { action } as GroupAction);
-    });
-  }
-
-  async function runActionPayload(payload: GroupAction): Promise<GroupActionResult | undefined> {
+  async function runAction(payload: GroupAction): Promise<GroupActionResult | undefined> {
     return await execute(payload.action, async () => {
       return await groupAction(groupId, payload);
     });
   }
 
   async function runActionWithToast(
-    action: GroupActionType,
+    payload: GroupAction,
     onComplete?: () => void
   ): Promise<void> {
-    const result = await runAction(action);
+    const result = await runAction(payload);
     if (!result?.ok) {
       showError(getErrorMessage(result?.errorCode));
       onComplete?.();
@@ -37,25 +34,19 @@ export function useGroupActions(groupId: string) {
     onComplete?.();
   }
 
-  async function runActionWithToastPayload(
-    payload: GroupAction,
-    onComplete?: () => void
-  ): Promise<void> {
-    const result = await runActionPayload(payload);
-    if (!result?.ok) {
-      showError(getErrorMessage(result?.errorCode));
-      onComplete?.();
-      return;
-    }
-    showSuccess("Успешно");
-    onComplete?.();
+  async function handleUpdateMaxMembers(onComplete?: () => void): Promise<void> {
+    await runActionWithToast(
+      { action: "update-max-members", maxMembers: newMaxMembers },
+      onComplete
+    );
   }
 
   return {
     isPending,
     runAction,
-    runActionPayload,
     runActionWithToast,
-    runActionWithToastPayload,
+    newMaxMembers,
+    setNewMaxMembers,
+    handleUpdateMaxMembers,
   };
 }

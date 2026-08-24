@@ -8,16 +8,13 @@ import type { GroupActionsProps } from "./GroupActions.types";
 
 export function GroupActions({ groupId, status }: GroupActionsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isPending, runActionWithToast, runActionWithToastPayload } =
-    useGroupActions(groupId);
-  const [newMaxMembers, setNewMaxMembers] = useState<number>(10);
-
-  const handleUpdateMaxMembers = () => {
-    runActionWithToastPayload(
-      { action: "update-max-members", maxMembers: newMaxMembers },
-      () => setMenuOpen(false)
-    );
-  };
+  const {
+    isPending,
+    runActionWithToast,
+    newMaxMembers,
+    setNewMaxMembers,
+    handleUpdateMaxMembers,
+  } = useGroupActions(groupId);
 
   return (
     <div className="relative">
@@ -48,12 +45,12 @@ export function GroupActions({ groupId, status }: GroupActionsProps) {
                 title="Приостановить группу?"
                 description="Все участники потеряют доступ к VPN до возобновления."
                 confirmLabel="Приостановить"
-                onConfirm={() => runActionWithToast("suspend", () => setMenuOpen(false))}
+                onConfirm={() => runActionWithToast({ action: "suspend" }, () => setMenuOpen(false))}
               />
             ) : (
               <button
                 type="button"
-                onClick={() => runActionWithToast("resume", () => setMenuOpen(false))}
+                onClick={() => runActionWithToast({ action: "resume" }, () => setMenuOpen(false))}
                 className="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-300 hover:bg-white/5"
               >
                 Возобновить
@@ -72,7 +69,7 @@ export function GroupActions({ groupId, status }: GroupActionsProps) {
               title="Ротировать ключи?"
               description="Каждому участнику будет выдан новый ключ подписки. Старые перестанут работать."
               confirmLabel="Ротировать"
-              onConfirm={() => runActionWithToast("rotate", () => setMenuOpen(false))}
+              onConfirm={() => runActionWithToast({ action: "rotate" }, () => setMenuOpen(false))}
             />
 
             <div className="flex items-center gap-2 px-3 py-2">
@@ -80,7 +77,7 @@ export function GroupActions({ groupId, status }: GroupActionsProps) {
               <input
                 type="number"
                 min={1}
-                max={10}
+                max={15}
                 value={newMaxMembers}
                 onChange={(e) => setNewMaxMembers(Number(e.target.value))}
                 className="w-14 rounded border border-white/10 bg-black/30 px-2 py-1 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -88,7 +85,7 @@ export function GroupActions({ groupId, status }: GroupActionsProps) {
               />
               <button
                 type="button"
-                onClick={handleUpdateMaxMembers}
+                onClick={() => handleUpdateMaxMembers(() => setMenuOpen(false))}
                 className="rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                 disabled={isPending === "update-max-members"}
               >
@@ -108,7 +105,7 @@ export function GroupActions({ groupId, status }: GroupActionsProps) {
               title="Удалить группу?"
               description="Группа и все её участники будут удалены. Действие необратимо."
               confirmLabel="Удалить"
-              onConfirm={() => runActionWithToast("delete", () => setMenuOpen(false))}
+              onConfirm={() => runActionWithToast({ action: "delete" }, () => setMenuOpen(false))}
             />
           </div>
         </>

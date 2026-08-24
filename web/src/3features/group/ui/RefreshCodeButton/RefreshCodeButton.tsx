@@ -43,7 +43,7 @@ export function RefreshCodeButton({ groupId }: RefreshCodeButtonProps) {
       title="Обновить код группы?"
       description="Старый код перестанет работать для новых регистраций. Уже зарегистрированных участников это не затронет."
       confirmLabel="Обновить"
-      onConfirm={() => runActionWithToast("refresh-code")}
+      onConfirm={() => runActionWithToast({ action: "refresh-code" })}
     />
   );
 }

@@ -7,8 +7,11 @@ import { prisma } from "@5shared/api/prisma";
 import { requireAdminSession } from "@5shared/session/guards";
 import { ErrorCode } from "@5shared/lib/errors";
 import { generateGroupCode } from "@5shared/lib/codes";
+
+
 import { groupActionSchema, type GroupAction } from "../model/schemas";
-import type { GroupActionResult } from "./groupAction.types";
+import type { GroupActionResult,MemberSelect , VpnStatus} from "./groupAction.types";
+
 
 export async function groupAction(
   groupId: string,
@@ -39,13 +42,14 @@ export async function groupAction(
       })
       .catch(() => null);
 
-  const setMembersVpnStatus = async (status: "active" | "disabled") => {
-    const targets = group.members.filter(
-      (m: any) => m.marzbanUsername && m.status !== "BANNED"
+  const members = group.members as MemberSelect[];
+
+  const setMembersVpnStatus = async (status: VpnStatus) => {
+    const targets = members.filter(
+      (m): m is MemberSelect & { marzbanUsername: string } =>
+        m.marzbanUsername !== null && m.status !== "BANNED",
     );
-    await Promise.all(
-      targets.map((m: any) => setVpnStatus(m.marzbanUsername, status))
-    );
+    await Promise.all(targets.map((m) => setVpnStatus(m.marzbanUsername, status)));
   };
 
   try {
@@ -74,7 +78,7 @@ export async function groupAction(
 
       case "rotate": {
         if (!isVpnMockMode) {
-          for (const m of (group.members as any[])) {
+          for (const m of members) {
             if (!m.marzbanUsername) continue;
             const { subscription_url } = await backend.rotateKey(m.marzbanUsername);
             await prisma.user.update({
@@ -83,13 +87,13 @@ export async function groupAction(
             });
           }
         }
-        await audit("group_rotate", `group=${group.name} members=${group.members.length}`);
+        await audit("group_rotate", `group=${group.name} members=${members.length}`);
         break;
       }
 
       case "delete": {
         await Promise.all(
-          (group.members as any[]).map((m) =>
+          members.map((m) =>
             setVpnStatus(m.marzbanUsername, "disabled").catch(() => null)
           )
         );

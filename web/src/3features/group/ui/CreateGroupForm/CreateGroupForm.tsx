@@ -35,8 +35,8 @@ export function CreateGroupForm() {
               label="Макс. участников"
               type="number"
               min={1}
-              max={10}
-              placeholder="1–10"
+              max={15}
+              placeholder="1–15"
               {...register("maxMembers", { valueAsNumber: true })}
             />
 
