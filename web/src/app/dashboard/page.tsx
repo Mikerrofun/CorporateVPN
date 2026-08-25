@@ -1,5 +1,6 @@
 import { requireEmployeeSession } from "@/5shared/session/guards";
 import { prisma } from "@/5shared/api/prisma";
+import { ConnectPanel } from "@/2widgets/connect-panel";
 
 export default async function DashboardPage() {
   const session = await requireEmployeeSession();
@@ -39,6 +40,9 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Подключение VPN: выбор приложения и OS, инструкции */}
+      <ConnectPanel subscriptionUrl={user.subscriptionUrl} />
 
       {/* Персональная подписка сотрудника (индивидуальный Marzban-аккаунт) */}
       {user.subscriptionUrl ? (
