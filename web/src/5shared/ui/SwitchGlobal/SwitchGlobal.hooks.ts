@@ -1,14 +1,8 @@
 'use client';
 
 import { useLayoutEffect, useRef, useState } from 'react';
-import type { SwitchOption } from './SwitchGlobal.types';
+import type { SwitchOption,Indicator } from './SwitchGlobal.types';
 
-interface Indicator {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-}
 
 export function useSwitchGlobal({
   options,

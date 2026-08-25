@@ -13,3 +13,10 @@ export interface SwitchGlobalProps {
   className?: string;
   sliderClassName?: string;
 }
+
+export interface Indicator {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
