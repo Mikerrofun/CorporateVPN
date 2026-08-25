@@ -1,5 +1,6 @@
 'use client';
 
+import { AnimatePresence, motion } from 'framer-motion';
 import { useDropdown } from './Dropdown.hooks';
 import type { DropdownProps } from './Dropdown.types';
 
@@ -37,31 +38,39 @@ export function Dropdown({ value, options, onSelect, className }: DropdownProps)
         />
       </button>
 
-      {isOpen && (
-        <div className="absolute top-full z-10 mt-2 w-full overflow-hidden rounded-2xl border border-white/[0.05] bg-panel shadow-xl shadow-black/40">
-          {options.map(({ key, label, icon: Icon }) => {
-            const isSelected = value === key;
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="absolute top-full z-10 mt-2 w-full overflow-hidden rounded-2xl border border-white/[0.05] bg-panel shadow-xl shadow-black/40"
+          >
+            {options.map(({ key, label, icon: Icon }) => {
+              const isSelected = value === key;
 
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => handleSelect(key)}
-                className={`flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm transition-colors ${
-                  isSelected
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 font-semibold text-white'
-                    : 'bg-panel text-slate-300 hover:bg-white/[0.06]'
-                }`}
-              >
-                {Icon && (
-                  <Icon className={isSelected ? 'h-5 w-5 text-white' : 'h-5 w-5 text-slate-400'} />
-                )}
-                <span>{label}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => handleSelect(key)}
+                  className={`flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm transition-colors ${
+                    isSelected
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 font-semibold text-white'
+                      : 'bg-panel text-slate-300 hover:bg-white/[0.06]'
+                  }`}
+                >
+                  {Icon && (
+                    <Icon className={isSelected ? 'h-5 w-5 text-white' : 'h-5 w-5 text-slate-400'} />
+                  )}
+                  <span>{label}</span>
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

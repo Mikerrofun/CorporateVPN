@@ -41,9 +41,8 @@ const OS_OPTIONS: DropdownOption[] = [
 export function ConnectPanel({ subscriptionUrl }: ConnectPanelProps) {
   const {
     os,
-    activeApp,
     apps,
-    currentApp,
+    selectedApp,
     handleOSChange,
     handleAppChange,
   } = useConnectPanel();
@@ -59,7 +58,7 @@ export function ConnectPanel({ subscriptionUrl }: ConnectPanelProps) {
     );
   }
 
-  if (!currentApp) {
+  if (!selectedApp) {
     return null;
   }
 
@@ -78,14 +77,14 @@ export function ConnectPanel({ subscriptionUrl }: ConnectPanelProps) {
               component: (
                 <span
                   className={`flex h-11 items-center justify-center p-3.5 text-sm font-normal leading-none transition-colors duration-200 ${
-                    activeApp === app.id ? 'text-white' : 'text-slate-400'
+                    selectedApp.id === app.id ? 'text-white' : 'text-slate-400'
                   }`}
                 >
                   {app.label}
                 </span>
               ),
             }))}
-            value={activeApp || ''}
+            value={selectedApp.id}
             onChange={handleAppChange}
             className="border border-white/[0.05] bg-black/35 p-1 flex-[3]"
             sliderClassName="bg-gradient-to-r from-blue-600 to-indigo-600"
@@ -100,7 +99,7 @@ export function ConnectPanel({ subscriptionUrl }: ConnectPanelProps) {
         </div>
       </div>
 
-      <Instructions app={currentApp} subscriptionUrl={subscriptionUrl} />
+      <Instructions app={selectedApp} subscriptionUrl={subscriptionUrl} />
     </div>
   );
 }

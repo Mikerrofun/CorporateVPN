@@ -62,17 +62,6 @@ export function getAppsForOS(os: OS): AppWithDownload[] {
   }));
 }
 
-export function getAppConfig(appId: AppId, os: OS): AppWithDownload | null {
-  const app = APPS[appId];
-  if (!app) return null;
-
-  return {
-    id: appId,
-    ...app,
-    downloadLink: app.downloads[os] || null,
-  };
-}
-
 export function generateDeepLink(appId: AppId, subscriptionUrl: string): string {
   const app = APPS[appId];
   if (!app) return subscriptionUrl;
