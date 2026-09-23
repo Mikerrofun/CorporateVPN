@@ -1,0 +1,282 @@
+From 3959dba246aa57a91a3307909b1582dde59e96eb Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.com>
+Date: Sat, 29 Aug 2026 23:50:57 +0000
+Subject: [PATCH] =?UTF-8?q?dashboard:=20=D1=83=D0=B1=D1=80=D0=B0=D1=82?=
+ =?UTF-8?q?=D1=8C=20=D0=B1=D0=BB=D0=BE=D0=BA=20=D1=81=D1=81=D1=8B=D0=BB?=
+ =?UTF-8?q?=D0=BA=D0=B8=20=D0=BF=D0=BE=D0=B4=D0=BF=D0=B8=D1=81=D0=BA=D0=B8?=
+ =?UTF-8?q?,=20=D0=B1=D0=B0=D0=B7=D0=BE=D0=B2=D1=8B=D0=B9=20mobile-=D0=B0?=
+ =?UTF-8?q?=D0=B4=D0=B0=D0=BF=D1=82=D0=B8=D0=B2?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- Удалён последний блок на /dashboard с дублирующей ссылкой подписки
+  (она уже доступна через ConnectPanel/Instructions)
+- Шапка дашборда: nav + кнопка выхода переносятся на маленьких экранах,
+  уменьшены боковые отступы на mobile (px-4 -> sm:px-6)
+- Карточки (.card): паддинг p-4 на mobile, p-6 от sm: и выше
+- Заголовок статус-карточки не ломается при переносе на узких экранах
+---
+ web/src/app/dashboard/layout.tsx |  8 ++++----
+ web/src/app/dashboard/page.tsx   | 14 +-------------
+ web/src/app/globals.css          |  2 +-
+ 3 files changed, 6 insertions(+), 18 deletions(-)
+
+diff --git a/web/src/app/dashboard/layout.tsx b/web/src/app/dashboard/layout.tsx
+index 4c56b00..d64c59f 100644
+--- a/web/src/app/dashboard/layout.tsx
++++ b/web/src/app/dashboard/layout.tsx
+@@ -22,15 +22,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
+   return (
+     <div className="flex min-h-screen flex-col">
+       <header className="sticky top-0 z-50 border-b border-white/[0.05] bg-panel/60 backdrop-blur-xl">
+-        <div className="mx-auto flex max-w-5xl flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
++        <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-4 sm:gap-4 sm:px-6 sm:flex-row sm:items-center sm:justify-between">
+           <div className="flex items-center gap-2">
+             <span className="h-2.5 w-2.5 rounded-full bg-blue-500 animate-pulse" />
+             <p className="text-sm font-bold tracking-tight text-white">
+               {group?.name ?? "Группа"}
+             </p>
+           </div>
+-          <div className="flex items-center gap-3">
+-            <nav className="flex gap-1.5">
++          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
++            <nav className="flex flex-wrap gap-1.5">
+               {NAV.map((item) => (
+                 <Link
+                   key={item.href}
+@@ -45,7 +45,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
+           </div>
+         </div>
+       </header>
+-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-8">{children}</main>
++      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">{children}</main>
+     </div>
+   );
+ }
+diff --git a/web/src/app/dashboard/page.tsx b/web/src/app/dashboard/page.tsx
+index eaacfe5..5daf1fd 100644
+--- a/web/src/app/dashboard/page.tsx
++++ b/web/src/app/dashboard/page.tsx
+@@ -15,7 +15,7 @@ export default async function DashboardPage() {
+   return (
+     <div className="space-y-6">
+       <div className="card bg-panel/30 border border-white/[0.05]">
+-        <div className="mb-4 flex items-center justify-between">
++        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+           <h1 className="text-lg font-bold tracking-tight text-white">Статус учётной записи</h1>
+           <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+             isActive
+@@ -43,18 +43,6 @@ export default async function DashboardPage() {
+ 
+       {/* Подключение VPN: выбор приложения и OS, инструкции */}
+       <ConnectPanel subscriptionUrl={user.subscriptionUrl} />
+-
+-      {/* Персональная подписка сотрудника (индивидуальный Marzban-аккаунт) */}
+-      {user.subscriptionUrl ? (
+-        <div className="card border border-white/[0.04]">
+-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Ссылка подписки</p>
+-          <p className="font-mono text-sm text-slate-300 break-all">{user.subscriptionUrl}</p>
+-        </div>
+-      ) : (
+-        <div className="card border border-dashed border-white/[0.08]">
+-          <p className="text-sm text-slate-500">VPN-подписка ещё не выдана администратором.</p>
+-        </div>
+-      )}
+     </div>
+   );
+ }
+diff --git a/web/src/app/globals.css b/web/src/app/globals.css
+index 0f2b691..98c30bf 100644
+--- a/web/src/app/globals.css
++++ b/web/src/app/globals.css
+@@ -13,7 +13,7 @@ body {
+ 
+ /* Glassmorphism card styling */
+ .card {
+-  @apply rounded-2xl border border-white/[0.05] bg-panel/60 p-6 backdrop-blur-xl shadow-xl shadow-black/30 transition-all duration-300 hover:border-white/[0.08];
++  @apply rounded-2xl border border-white/[0.05] bg-panel/60 p-4 backdrop-blur-xl shadow-xl shadow-black/30 transition-all duration-300 hover:border-white/[0.08] sm:p-6;
+ }
+ 
+ /* Premium Buttons */
+-- 
+2.43.0
+
+
+From 3814f59064d541158bde9cdcd7e5c71910740da2 Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.com>
+Date: Sat, 29 Aug 2026 23:54:40 +0000
+Subject: [PATCH] =?UTF-8?q?support:=20=D0=BC=D0=B8=D0=BD=D0=B8=D0=BC=D0=B0?=
+ =?UTF-8?q?=D0=BB=D1=8C=D0=BD=D0=B0=D1=8F=20=D1=84=D0=BE=D1=80=D0=BC=D0=B0?=
+ =?UTF-8?q?=20=D0=BE=D0=B1=D1=80=D0=B0=D1=89=D0=B5=D0=BD=D0=B8=D1=8F=20+?=
+ =?UTF-8?q?=20API-=D1=80=D0=BE=D1=83=D1=82=20=D1=81=D0=BE=D1=85=D1=80?=
+ =?UTF-8?q?=D0=B0=D0=BD=D0=B5=D0=BD=D0=B8=D1=8F?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Схема Prisma (SupportTicket: message, userId, groupId) и server action
+createTicket с Zod-валидацией уже существовали в проекте, не хватало
+только UI и роута для их вызова:
+
+- SupportForm упрощён до минимума (текстовое поле + кнопка «Отправить»),
+  убран выбор темы — тема фиксируется как OTHER
+- Ошибки теперь показываются через общий словарь getErrorMessage
+  (errorCode с сервера), а не через сырую строку
+- Добавлен POST /api/support, переиспользующий существующий
+  server action createTicket (валидация + сохранение в БД)
+- Форма подключена на /dashboard/support вместо TODO-заглушки
+- Добавлен index.ts (barrel-экспорт) для фичи support — по аналогии
+  с invite/auth
+---
+ web/src/3features/support/index.ts           |  3 ++
+ web/src/3features/support/ui/SupportForm.tsx | 35 ++++----------------
+ web/src/app/api/support/route.ts             | 16 +++++++++
+ web/src/app/dashboard/support/page.tsx       |  6 ++--
+ 4 files changed, 28 insertions(+), 32 deletions(-)
+ create mode 100644 web/src/3features/support/index.ts
+ create mode 100644 web/src/app/api/support/route.ts
+
+diff --git a/web/src/3features/support/index.ts b/web/src/3features/support/index.ts
+new file mode 100644
+index 0000000..08ccea3
+--- /dev/null
++++ b/web/src/3features/support/index.ts
+@@ -0,0 +1,3 @@
++export { SupportForm } from "./ui/SupportForm";
++export { createTicket } from "./api/createTicket";
++export { getTickets, type TicketListItem } from "./api/getTickets";
+diff --git a/web/src/3features/support/ui/SupportForm.tsx b/web/src/3features/support/ui/SupportForm.tsx
+index 963040d..c1180da 100644
+--- a/web/src/3features/support/ui/SupportForm.tsx
++++ b/web/src/3features/support/ui/SupportForm.tsx
+@@ -3,16 +3,14 @@
+ import { useRouter } from "next/navigation";
+ import { useState } from "react";
+ 
+-const TOPICS = [
+-  { value: "CONNECTION", label: "Проблема с подключением" },
+-  { value: "SPEED", label: "Низкая скорость" },
+-  { value: "ACCOUNT", label: "Аккаунт и доступ" },
+-  { value: "OTHER", label: "Другое" },
+-];
++import { getErrorMessage } from "@/5shared/lib/errors";
++
++// Тема обращения пока не выбирается пользователем — форма минимальна
++// (текстовое поле + кнопка). Все обращения из дашборда идут с темой OTHER.
++const DEFAULT_TOPIC = "OTHER";
+ 
+ export function SupportForm() {
+   const router = useRouter();
+-  const [topic, setTopic] = useState("CONNECTION");
+   const [message, setMessage] = useState("");
+   const [error, setError] = useState<string | null>(null);
+   const [sent, setSent] = useState(false);
+@@ -25,12 +23,12 @@ export function SupportForm() {
+     const res = await fetch("/api/support", {
+       method: "POST",
+       headers: { "Content-Type": "application/json" },
+-      body: JSON.stringify({ topic, message }),
++      body: JSON.stringify({ topic: DEFAULT_TOPIC, message }),
+     });
+     setLoading(false);
+     if (!res.ok) {
+       const data = await res.json().catch(() => ({}));
+-      setError(data.error ?? "Не удалось отправить обращение");
++      setError(getErrorMessage(data.errorCode));
+       return;
+     }
+     setMessage("");
+@@ -48,25 +46,6 @@ export function SupportForm() {
+         </p>
+       </div>
+ 
+-      <div>
+-        <label htmlFor="support-topic-select" className="label">Тема обращения</label>
+-        <select
+-          id="support-topic-select"
+-          className="input appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em] pr-10"
+-          style={{
+-            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+-          }}
+-          value={topic}
+-          onChange={(e) => setTopic(e.target.value)}
+-        >
+-          {TOPICS.map((t) => (
+-            <option key={t.value} value={t.value} className="bg-slate-900 text-slate-100">
+-              {t.label}
+-            </option>
+-          ))}
+-        </select>
+-      </div>
+-
+       <div>
+         <label htmlFor="support-message-textarea" className="label">Описание проблемы</label>
+         <textarea
+diff --git a/web/src/app/api/support/route.ts b/web/src/app/api/support/route.ts
+new file mode 100644
+index 0000000..7dcf31d
+--- /dev/null
++++ b/web/src/app/api/support/route.ts
+@@ -0,0 +1,16 @@
++import { NextResponse } from "next/server";
++
++import { createTicket } from "@/3features/support";
++import { ErrorCode } from "@/5shared/lib/errors";
++
++export async function POST(req: Request) {
++  const body = await req.json().catch(() => null);
++
++  const result = await createTicket(body);
++  if (!result.ok) {
++    const status = result.errorCode === ErrorCode.UNAUTHORIZED ? 401 : 400;
++    return NextResponse.json({ errorCode: result.errorCode }, { status });
++  }
++
++  return NextResponse.json({ ok: true }, { status: 201 });
++}
+diff --git a/web/src/app/dashboard/support/page.tsx b/web/src/app/dashboard/support/page.tsx
+index a102b5b..968409f 100644
+--- a/web/src/app/dashboard/support/page.tsx
++++ b/web/src/app/dashboard/support/page.tsx
+@@ -1,5 +1,6 @@
+ import { requireEmployeeSession } from "@/5shared/session/guards";
+ import { prisma } from "@/5shared/api/prisma";
++import { SupportForm } from "@/3features/support";
+ 
+ const TOPIC_LABELS: Record<string, string> = {
+   CONNECTION: "Подключение",
+@@ -19,10 +20,7 @@ export default async function SupportPage() {
+ 
+   return (
+     <div className="space-y-6">
+-      {/* TODO: SupportForm (Server Action createTicket) */}
+-      <div className="card border border-dashed border-white/[0.08]">
+-        <p className="text-sm text-slate-500">Форма обращения — в разработке</p>
+-      </div>
++      <SupportForm />
+ 
+       <div className="card">
+         <h2 className="mb-3 text-sm font-semibold text-slate-300">Мои обращения</h2>
+-- # ветка 1
+git checkout main && git pull
+git checkout -b feature/dashboard-mobile-cleanup
+git am 0001-dashboard-mobile-cleanup.patch
+git push -u origin feature/dashboard-mobile-cleanup
+gh pr create --base main --title "Dashboard: убрать блок подписки, базовый mobile-адаптив" --fill
+
+# ветка 2
+git checkout main
+git checkout -b feature/dashboard-support-ticket
+git am 0002-dashboard-support-ticket.patch
+git push -u origin feature/dashboard-support-ticket
+gh pr create --base main --title "Support: форма обращения и POST /api/support" --fill
+2.43.0
+
+git checkout main
+git checkout -b feature/dashboard-mobile-cleanup
+git am 0001-dashboard-mobile-cleanup.patch
+
+git checkout main
+git checkout -b feature/dashboard-support-ticket
+git am 0002-dashboard-support-ticket.patch и вот для гитхаба чтобы использовался
